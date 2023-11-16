@@ -1,29 +1,69 @@
 class Boid:
 
-    def __init__(self,id,weights,percep_field):
+    def __init__(self,id,weights,percep_field,state):
         
         self.id = id
         self.w_a, self.wc, self.ws = weights
         self.local_r, self.local_theta = percep_field
 
-        self.pose = None
+        # [x,y,theta,v_x,v_y,w]
+        self.state = state
 
-        # list of poses [x,v] for bois in neigborhood
+        # list of neigbors as boid objects
         self.neigbors = None
+
+    def get_pos(self):
+        '''
+        Returns position as [x,y]
+        '''
+        return self.state[:2]
+    
+    def get_theta(self):
+        '''
+        Returns heading theta
+        '''
+        return self.state[2]
+
+    def get_pose(self):
+        '''
+        Returns pose as [x,y,theta]
+        '''
+        return self.state[:3]
+    
+    def get_linvel(self):
+        '''
+        Returns linear velocity as [v_x,v_y]
+        '''
+        return self.state[3:5]
+    
+    def get_angvel(self):
+        '''
+        Returns angular velocity w (theta_dot)
+        '''
+        return self.state[5]
+
+    def get_vel(self):
+        '''
+        Returns lin and angular velocity as [v_x,v_y,w]
+        '''
+        return self.state[3:]
+    
+    def set_state(self,state):
+        '''
+        Updates state of boid
+        '''
+        self.state = state
             
-    def update(self,self_pose,all_poses):
+    def update(self,boids):
         '''
         Updates the robot pose and neighborhood.
 
         Parameters:
-        - self_pose: pose of the boid as [x,y,theta]
-        - all_poses: poses of all boids as a list of [[x,y,theta],[v_x,v_y,w]]
+        boids: list of all boids as Boid instances
 
         Returns:
         - cmd_vel: desired velocities of the boid as [v_x,v_y]
         '''
-
-        self.pose = self_pose
         
         # TODO: update neighborhood 
 
