@@ -1,0 +1,10 @@
+<launch>
+    <!-- Declare a parameter for the node -->
+    <param name="example_param" type="str" value="custom_value"/>
+
+    <!-- Run the example node -->
+    <node name="reynolds_part_1" pkg="mrs-r1" type="reynolds.py" output="screen">
+        <rosparam file="$(find mrs-r1)/params.yaml"/>
+    </node>
+
+</launch>
