@@ -16,6 +16,10 @@ pip install -r requirements.txt
 
 2. Launch the reynold's algorithm
 
+```
+roslaunch mrs-r1 part1.launch
+```
+
 ## Tunable parameters
 
 - n_boids: Number of boids. Must be consistent with the number of boids in the simulator.
