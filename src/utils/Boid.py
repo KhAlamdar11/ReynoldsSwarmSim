@@ -1,16 +1,18 @@
+import numpy as np
+
 class Boid:
 
     def __init__(self,id,weights,percep_field,state):
         
         self.id = id
-        self.w_a, self.wc, self.ws = weights
+        self.w_a, self.w_c, self.w_s = weights
         self.local_r, self.local_theta = percep_field
 
         # [x,y,theta,v_x,v_y,w]
         self.state = state
 
         # list of neigbors as boid objects
-        self.neigbors = None
+        self.neighbors = None
 
     def get_pos(self):
         '''
@@ -53,8 +55,16 @@ class Boid:
         Updates state of boid
         '''
         self.state = state
+
+    def set_neighbors(self,neighbor):
+        '''
+        Updates the neighbors of the boid
+        '''
+        print("I'm here. ")
+        print(neighbor)
+        self.neighbors = neighbor
             
-    def update(self,boids):
+    def update(self,boids=None):
         '''
         Updates the robot pose and neighborhood.
 
@@ -71,7 +81,7 @@ class Boid:
         acc = self._combine_behaviours()
 
         # TODO: Compute desired velocities from desired accel
-        cmd_vel = 0 # REMOVE
+        cmd_vel = self.get_linvel() + acc
 
         return cmd_vel
 
@@ -79,26 +89,42 @@ class Boid:
     def _alignment(self):
         ''' Computes required acceleration due to alignment. '''
         # TODO
-        acc = 0 # REMOVE
+        acc = 0 
+        if self.neighbors != None:
+            print("Here")
+            for boid in self.neighbors:
+                acc += np.array(self.get_linvel()) - np.array(boid.get_linvel()) 
+            acc = acc/len(self.neighbors) 
         return acc
     
 
     def _cohesion(self):
         ''' Computes required acceleration due to cohesion. '''
         # TODO
-        acc = 0 # REMOVE
+        acc = 0 
+        if self.neighbors != None:
+            for boid in self.neighbors:
+                acc += np.array(self.get_pos()) - np.array(boid.get_pos()) 
+            acc = acc/len(self.neighbors) 
         return acc
     
 
     def _seperation(self):
         ''' Computes required acceleration due to seperation. '''
         # TODO
-        acc = 0 # REMOVE
+        acc = 0 
+        if self.neighbors != None:
+            for boid in self.neighbors:
+                distance = np.array(self.get_pos()) - np.array(boid.get_pos()) 
+                square_distance = (np.linalg.norm(np.array(self.get_pos()) - np.array(boid.get_pos())))**2
+                acc += (distance/square_distance)
+            acc = acc/len(self.neighbors) 
         return acc
 
 
     def _combine_behaviours(self):
         ''' Calls behaviours, and computes the net weighted acceleration. '''
+        print(self._alignment(), self._cohesion(), self._seperation())
         acc = self.w_a*self._alignment() + self.w_c*self._cohesion() + self.w_s*self._seperation()
         return acc
     

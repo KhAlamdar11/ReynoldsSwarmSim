@@ -68,14 +68,36 @@ class Reynolds:
             self.boids[robot_id] = Boid(robot_id,self.weights,self.percep_field,x)
 
 
+    def find_neighbors(self, boid):
+        # Retrieve the position of each boid. 
+        neighbors = []
+        for i in range(self.n_boids):
+            if self.boids[i].get_pos() != boid.get_pos():
+                distance = np.linalg.norm(np.array(boid.get_pos()) - np.array(self.boids[i].get_pos()))
+                if distance <= boid.local_r:
+                    neighbors.append(self.boids[i])
+        return neighbors
+    
+    # Write a function that takes in a boid and cmd_vel and publishes it to the appropriate topic
+    def publish_cmd_vel(self, boid, vel):
+        # Make cmd_vel a Twist message
+        cmd_vel = Twist()
+        cmd_vel.linear.x = vel[0]
+        cmd_vel.linear.y = vel[1]
+        # Publish to the appropriate topic
+        self.pubs[boid.id].publish(cmd_vel)
+
+
     def run(self,event):
         
         for b in self.boids:
-            
+            neighbors = self.find_neighbors(b)
+
+            b.set_neighbors(neighbors)
             cmd_vel = b.update(self.boids)
 
             # TODO: publish the cmd velocity to the appropriate boids topic
-            # self.pubs[b.id].publish
+            self.publish_cmd_vel(b, cmd_vel)
         
 
     def _test_odom(self,event):
