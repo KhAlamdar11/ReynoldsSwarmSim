@@ -60,8 +60,8 @@ class Boid:
         '''
         Updates the neighbors of the boid
         '''
-        print("Setting neighbors")
-        print("neighbor: ", neighbor)
+        print("I'm here. ")
+        print(neighbor)
         self.neighbors = neighbor
             
     def update(self,boids=None):
@@ -76,7 +76,6 @@ class Boid:
         '''
         
         # TODO: update neighborhood 
-        self.neighbors = self.local_perception(boids)
 
         # Compute acceleration
         acc = self._combine_behaviours()
@@ -85,22 +84,7 @@ class Boid:
         cmd_vel = self.get_linvel() + acc
 
         return cmd_vel
-    
-    def local_perception(self,boids):
-        '''
-        Updates the neighbors of the boid accroding to local perceptive field range and fov angle
 
-        Parameters:
-        - boids: list of boids
-        - self.local_r: range of perceptive field
-        - self.local_theta: fov angle of perceptive field
-        - self.id = boid id
-
-        Returns:
-        - neighbors: List of neighbors as boid objects
-        '''
-
-        # Tip: Extract position as boids[i].get_pos and angle with boids[i].get_theta
 
     def _alignment(self):
         ''' Computes required acceleration due to alignment. '''
@@ -140,7 +124,6 @@ class Boid:
 
     def _combine_behaviours(self):
         ''' Calls behaviours, and computes the net weighted acceleration. '''
-        print("---  ---")
         print(self._alignment(), self._cohesion(), self._seperation())
         acc = self.w_a*self._alignment() + self.w_c*self._cohesion() + self.w_s*self._seperation()
         return acc
