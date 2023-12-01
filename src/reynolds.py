@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 
 import numpy as np
 
-from utils.utils import pose_msg_to_state
+from utils.state_tf  import pose_msg_to_state
 from utils.Boid import Boid
 
 class Reynolds:

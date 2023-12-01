@@ -1,5 +1,11 @@
 ﻿# MRS Part 1 - Reynold's Rule
 
+## recent changes made by nada :
+- state_tf - the transform function file 
+- boid2 - Boid_testing_visualization
+- all visualization file are inside visualization_files folder inside src
+- results folder to add the figures & plots 
+
 ## Dependencies:
 
 All dependencies can be installed by:

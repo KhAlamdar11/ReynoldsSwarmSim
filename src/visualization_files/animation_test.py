@@ -4,7 +4,7 @@ from matplotlib.animation import FuncAnimation
 from functools import partial
 import matplotlib.patches as patches
 import random
-from utils.Boid2 import Boid
+from utils.Boid_testing_visualization import Boid
 
 # Get parameters
 n_boids = 100
