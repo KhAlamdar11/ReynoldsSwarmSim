@@ -19,7 +19,7 @@ class Reynolds:
                         rospy.get_param('~w_c'),
                         rospy.get_param('~w_s')]
         self.percep_field = [rospy.get_param('~local_r'),
-                              rospy.get_param('~local_theta')]
+                            rospy.get_param('~local_theta')]
 
         rospy.loginfo('n_boids: %s', self.n_boids)
         rospy.loginfo('weights [w_a, w_c, w_s]: %s', self.weights)
@@ -46,7 +46,7 @@ class Reynolds:
             
 
         # execute algorithm 
-        # rospy.Timer(rospy.Duration(0.1), self.run)
+        rospy.Timer(rospy.Duration(0.1), self.run)
 
         # tests
         # rospy.Timer(rospy.Duration(1.0), self._test_odom)
@@ -81,6 +81,7 @@ class Reynolds:
     # Write a function that takes in a boid and cmd_vel and publishes it to the appropriate topic
     def publish_cmd_vel(self, boid, vel):
         # Make cmd_vel a Twist message
+        print(vel)
         cmd_vel = Twist()
         cmd_vel.linear.x = vel[0]
         cmd_vel.linear.y = vel[1]
@@ -91,9 +92,10 @@ class Reynolds:
     def run(self,event):
         
         for b in self.boids:
+            # TODO: do the neighbor stuff within the boid class not here
             neighbors = self.find_neighbors(b)
-
             b.set_neighbors(neighbors)
+
             cmd_vel = b.update(self.boids)
 
             # TODO: publish the cmd velocity to the appropriate boids topic

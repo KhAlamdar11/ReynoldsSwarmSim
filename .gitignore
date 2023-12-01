@@ -132,6 +132,6 @@ dmypy.json
 .pyre/
 
 # Test scripts
-_tests/
+# _tests/
 _readmes/
 

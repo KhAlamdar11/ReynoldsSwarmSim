@@ -7,5 +7,5 @@ w_c: 1
 w_s: 1
 
 # neighborhood params
-local_r: 2.0
+local_r: 3.0
 local_theta: 180.0
