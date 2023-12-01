@@ -1,4 +1,5 @@
 import numpy as np
+from p5 import stroke, circle
 
 class Boid:
 
@@ -11,8 +12,31 @@ class Boid:
         # [x,y,theta,v_x,v_y,w]
         self.state = state
 
+        # Visulaization radius
+        self.radius = 5 
+
         # list of neigbors as boid objects
         self.neighbors = None
+
+    def show(self):
+        stroke(255)
+        circle((self.state[0], self.state[1]), self.radius)
+
+    def edges(self):
+        if self.state[0] > self.get_canvas()[0]:
+            self.state[0] = 0
+        elif self.state[0] < 0:
+            self.state[0] = self.get_canvas()[0]
+
+        if self.state[1] > self.get_canvas()[1]:
+            self.state[1] = 0
+        elif self.state[1] < 0:
+            self.state[1] = self.get_canvas()[1]
+
+    @staticmethod
+    def get_canvas():
+        canvas = [1000, 1000]
+        return canvas
 
     def get_pos(self):
         '''
@@ -81,13 +105,17 @@ class Boid:
         # TODO: Compute desired velocities from desired accel
         cmd_vel = self.get_linvel() + acc
 
+        # Motion Model --------------------------------------
+        self.state[0] += cmd_vel[0]
+        self.state[1] += cmd_vel[1]
+
         return cmd_vel
 
 
     def _alignment(self):
         ''' Computes required acceleration due to alignment. '''
         # TODO
-        acc = [0, 0]
+        acc = np.zeros((2,))
         if self.neighbors != None and len(self.neighbors) != 0:
             for boid in self.neighbors:
                 acc += np.array(self.get_linvel()) - np.array(boid.get_linvel()) 
@@ -98,7 +126,7 @@ class Boid:
     def _cohesion(self):
         ''' Computes required acceleration due to cohesion. '''
         # TODO
-        acc = [0, 0] 
+        acc = np.zeros((2,))
         if self.neighbors != None and len(self.neighbors) != 0:
             for boid in self.neighbors:
                 acc += np.array(self.get_pos()) - np.array(boid.get_pos()) 
@@ -109,7 +137,7 @@ class Boid:
     def _seperation(self):
         ''' Computes required acceleration due to seperation. '''
         # TODO
-        acc = [0, 0]
+        acc = np.zeros((2,))
         if self.neighbors != None and len(self.neighbors) != 0:
             for boid in self.neighbors:
                 distance = np.array(self.get_pos()) - np.array(boid.get_pos()) 
@@ -121,7 +149,7 @@ class Boid:
 
     def _combine_behaviours(self):
         ''' Calls behaviours, and computes the net weighted acceleration. '''
-        acc = self.w_a*self._alignment() + self.w_c*self._cohesion() + self.w_s*self._seperation()
+        acc = self.w_a*self._alignment() + self.w_c*self._cohesion() - self.w_s*self._seperation()
         return acc
     
 

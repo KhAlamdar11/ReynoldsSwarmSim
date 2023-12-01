@@ -58,5 +58,9 @@ Parameters can be modified in the params.yaml file.
 ## dev notes
 
 - You can use get_{functions} to directly extract parts of state from the state vector for simplicity
+- Two simulation modes: 
+    - **Matplotlib**: The boids are visualized in a matplotlib window. This is useful for debugging and testing. See the `animation_test.py` script for an example.
+    - **P5**: The boids are visualized in the P5 simulator. This is the actual simulation mode. See the `p5_test.py` script for an example. This script is a good starting point for testing your code. You can use it to test your code before integrating it with the ROS script.
+- You can use the 'separation_visualization.py' script to visualize the separation behaviour. 
 
 

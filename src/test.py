@@ -6,11 +6,11 @@ class Reynolds:
     def __init__(self):
 
         # Get parameters
-        self.n_boids = 5
+        self.n_boids = 100
         self.weights = [1,
                         1,
                         1]
-        self.percep_field = [5, 180]
+        self.percep_field = [2, 180]
         
         x = [[random.randint(0, 10), random.randint(0, 10), random.randint(-180, 180), 
              random.randint(0, 10), random.randint(0, 10), random.randint(0, 5)] for robot_id in range(self.n_boids)]
@@ -35,11 +35,13 @@ if __name__ == '__main__':
     random.seed(100)
     cl = Reynolds()
 
-    neighbors = cl.find_neighbors(cl.boids[0])
-    print("Current: ", cl.boids[0].get_pos())
-    print([boids.state for boids in cl.boids])
-    print(neighbors)
+    for boid in cl.boids:
 
-    cl.boids[0].set_neighbors(neighbors)
+        neighbors = cl.find_neighbors(boid)
+        # print("Current: ", cl.boids[0].get_pos())
+        # print([boids.state for boids in cl.boids])
+        print("Neighbors: ", neighbors)
 
-    print(cl.boids[0].update())
+        boid.set_neighbors(neighbors)
+
+        boid.update()

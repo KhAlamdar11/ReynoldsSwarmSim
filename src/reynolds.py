@@ -46,7 +46,7 @@ class Reynolds:
             
 
         # execute algorithm 
-        # rospy.Timer(rospy.Duration(0.1), self.run)
+        rospy.Timer(rospy.Duration(0.1), self.run)
 
         # tests
         # rospy.Timer(rospy.Duration(1.0), self._test_odom)
@@ -72,7 +72,12 @@ class Reynolds:
         # Retrieve the position of each boid. 
         neighbors = []
         for i in range(self.n_boids):
-            if self.boids[i].get_pos() != boid.get_pos():
+            # Skip if boid is self or if boid has not been created yet
+            if self.boids[i] == None:
+                continue
+            # Calculate the distance between the boid and the other boids
+            # Do this only if the other boid has a position
+            if self.boids[i].get_pos() != boid.get_pos() and self.boids[i].get_pos() != None:
                 distance = np.linalg.norm(np.array(boid.get_pos()) - np.array(self.boids[i].get_pos()))
                 if distance <= boid.local_r:
                     neighbors.append(self.boids[i])
@@ -89,8 +94,17 @@ class Reynolds:
 
 
     def run(self,event):
-        
+        print('-------------------------')
+        # TODO: Change the control of the number of boids from the simulator.
+        print(self.boids)
+        # Ensure that all boids have been created and have a position and velocity before running the algorithm
         for b in self.boids:
+            if b == None:
+                continue
+            if b.get_pos() == None:
+                continue
+
+            print(f"Boid {b.id} is at loc: {b.get_pos()} with velocty: {b.get_linvel()}")
             neighbors = self.find_neighbors(b)
 
             b.set_neighbors(neighbors)
