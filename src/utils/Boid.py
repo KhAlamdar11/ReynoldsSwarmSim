@@ -64,7 +64,7 @@ class Boid:
             
     def update(self,boids=None):
         '''
-        Updates the robot pose and neighborhood.
+        Calls and combines behaviors.
 
         Parameters:
         boids: list of all boids as Boid instances
@@ -72,8 +72,6 @@ class Boid:
         Returns:
         - cmd_vel: desired velocities of the boid as [v_x,v_y]
         '''
-        
-        # TODO: update neighborhood 
 
         # Compute acceleration
         acc = self._combine_behaviours()

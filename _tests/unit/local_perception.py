@@ -1,6 +1,11 @@
-from utils.Boid import Boid
+import sys, os
 import random
 import numpy as np
+
+parent_dir = os.path.dirname('/ROS_WS/mrs_ws/src/mrs-r1')
+sys.path.append(parent_dir)
+from utils.Boid import Boid
+from reynolds import Reynolds
 
 # Dummy parameters
 n_boids = 5
@@ -18,5 +23,7 @@ boid_id = 2
 
 neighbors = [Boid(robot_id,weights,percep_field, all_boids[robot_id]+[0,0,0]) 
                                     for robot_id in range(n_boids)]
+
+
 
 print(neighbors)
