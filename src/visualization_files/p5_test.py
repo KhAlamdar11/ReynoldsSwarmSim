@@ -1,5 +1,5 @@
 from p5 import size, background, run
-from utils.Boid2 import Boid
+from utils.Boid_testing_visualization import Boid
 import random
 import numpy as np
 

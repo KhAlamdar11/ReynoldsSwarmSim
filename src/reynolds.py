@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 
 import numpy as np
 
-from utils.utils import pose_msg_to_state
+from utils.state_tf  import pose_msg_to_state
 from utils.Boid import Boid
 
 class Reynolds:
@@ -75,12 +75,16 @@ class Reynolds:
             # Skip if boid is self or if boid has not been created yet
             if self.boids[i] == None:
                 continue
-            # Calculate the distance between the boid and the other boids
-            # Do this only if the other boid has a position
-            if self.boids[i].get_pos() != boid.get_pos() and self.boids[i].get_pos() != None:
-                distance = np.linalg.norm(np.array(boid.get_pos()) - np.array(self.boids[i].get_pos()))
-                if distance <= boid.local_r:
-                    neighbors.append(self.boids[i])
+            if self.boids[i] != boid :
+                dx = self.boids[i].get_pos()[0] - boid.get_pos()[0]
+                dy = self.boids[i].get_pos()[1] - boid.get_pos()[1]
+                angle_diff = abs(self.boids[i].get_theta() - boid.get_theta())
+                angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi
+                if abs(angle_diff) < boid.local_theta / 2:
+                    distance = np.linalg.norm(np.array(boid.get_pos()) - np.array(self.boids[i].get_pos()))
+                    if distance <= boid.local_r:
+                        neighbors.append(self.boids[i])
+        print("here",neighbors)
         return neighbors
     
     # Write a function that takes in a boid and cmd_vel and publishes it to the appropriate topic

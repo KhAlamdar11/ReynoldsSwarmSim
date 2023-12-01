@@ -1,11 +1,11 @@
 # number of boids
-n_boids: 5
+n_boids: 10
 
 # behavior weights
-w_a: 1
-w_c: 1
-w_s: 1
+w_a: 0.3
+w_c: 0.3
+w_s: 0.4
 
 # neighborhood params
-local_r: 0.5
-local_theta: 180.0
+local_r: 1
+local_theta: 270.0
