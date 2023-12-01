@@ -121,7 +121,7 @@ class Boid:
 
     def _combine_behaviours(self):
         ''' Calls behaviours, and computes the net weighted acceleration. '''
-        acc = self.w_a*self._alignment() + self.w_c*self._cohesion() + self.w_s*self._seperation()
+        acc = - self.w_a*self._alignment() - self.w_c*self._cohesion() + self.w_s*self._seperation()
         return acc
     
 
