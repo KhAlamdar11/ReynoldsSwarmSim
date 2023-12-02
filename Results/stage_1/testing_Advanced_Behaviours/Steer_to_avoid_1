@@ -1,0 +1,13 @@
+Steer_to_avoid_1
+
+check 100 100
+busy cell 100 100
+added angle 100
+sub angle 80
+busy cell 100 100
+added angle 110
+sub angle 70
+busy cell 100 100
+added angle 120
+free cell 75 93
+Resulting steering adjustment: 120

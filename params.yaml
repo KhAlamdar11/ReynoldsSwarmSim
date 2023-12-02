@@ -9,3 +9,4 @@ w_s: 0.4
 # neighborhood params
 local_r: 2.0
 local_theta: 180.0
+step_angle: 10
