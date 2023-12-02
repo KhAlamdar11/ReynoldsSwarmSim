@@ -13,8 +13,26 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy
 import random
 
+def find_neighborhood(character, characters, neighborhood_distance, field_of_view):
+    neighbors = []
+
+    for other_char in characters:
+        if other_char != character:
+            dx = other_char[0] - character[0]
+            dy = other_char[1] - character[1]
+            angle_diff = abs(other_char[2] - character[2])
+            angle_diff = (angle_diff + math.pi) % (2 * math.pi) - math.pi
+
+            if abs(angle_diff) < field_of_view / 2:
+                distance = math.sqrt(dx ** 2 + dy ** 2)
+                if distance < neighborhood_distance:
+                    neighbors.append(other_char)
+
+    return neighbors
+
+
 def visualize_neighborhoods_2d(characters, neighborhoods, neighborhood_distance, field_of_view):
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(8, 8))
 
     for character in characters:
         plt.scatter(character[0], character[1], color='blue')
@@ -36,40 +54,17 @@ def visualize_neighborhoods_2d(characters, neighborhoods, neighborhood_distance,
     plt.axis('equal')
     plt.show()
 
-def find_neighborhood(character, characters, neighborhood_distance, field_of_view):
-    neighbors = []
-
-    for other_char in characters:
-        if other_char != character:
-            dx = other_char[0] - character[0]
-            dy = other_char[1] - character[1]
-            alpha = math.atan2(dy,dx)
-            angle_diff = abs(alpha - character[2])
-            #to normalize the angle difference to fall within the range
-            angle_diff = (angle_diff + math.pi) % (2 * math.pi) - math.pi
-
-            if abs(angle_diff) < field_of_view/2:
-                distance = math.sqrt(dx ** 2 + dy ** 2)
-                if distance < neighborhood_distance:
-                    neighbors.append(other_char)
-
-    return neighbors
-
-
-
-
 def main():
-    num_boids=10
+    num_boids=20
     boids_position =  [[random.uniform(0, 10), random.uniform(0, 10), random.uniform(0, 2 * math.pi)] for _ in range(num_boids)]
 
-    neighborhood_distance = 2
+    neighborhood_distance = 1
     field_of_view = math.pi * (270 / 180)  # Convert 270 degrees to radians
 
     neighborhoods = []
     for boid in boids_position:
         neighborhood = find_neighborhood(boid, boids_position, neighborhood_distance, field_of_view)
         neighborhoods.append(neighborhood)
-        # print(boid,neighborhoods)
 
     visualize_neighborhoods_2d(boids_position, neighborhoods, neighborhood_distance, field_of_view)
 
