@@ -122,6 +122,10 @@ class Boid:
         acc = - self.w_a*self._alignment() - self.w_c*self._cohesion() + self.w_s*self._seperation()
         return acc
     
-
-    # TODO: def _obstacle_avoidance(self):
-    # TODO: def _pursuits(self)
+    def test_obstacle_avoidance(self,ob=None):
+        # print('in test obs avoidance')
+        vel = np.array([0.2, 0])
+        # vel += np.array(ob.get_force_vector(self.get_pos()))
+        vel += np.array(ob.compute(self.get_linvel())) 
+        # print('Velocity: ', vel)
+        return vel

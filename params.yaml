@@ -1,5 +1,5 @@
 # number of boids
-n_boids: 10
+n_boids: 5
 
 # behavior weights
 w_a: 0.3
@@ -9,3 +9,7 @@ w_s: 0.4
 # neighborhood params
 local_r: 2.0
 local_theta: 180.0
+
+# obstacle params
+obs_r:  1.0 # for both see-to-avoid and pot field
+ang_inc: 10 # for see-to-avoid only

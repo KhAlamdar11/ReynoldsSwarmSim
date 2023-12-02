@@ -1,7 +1,11 @@
 import numpy as np
 import math
+import rospy
 from ompl import base as ob
 from ompl import geometric as og
+import matplotlib.pyplot as plt
+import copy
+import matplotlib.patches as patches
 
 def wrap_angle(angle):
     """Wrap an angle to the range of -pi to pi."""
@@ -32,30 +36,41 @@ class PotentialField:
     
     # Set occupancy map, its resolution and origin. 
     def set(self, data, resolution, origin):
+    
+        print(' In set Map')
+
+        # save map params
         self.map = data
         self.map_dim = self.map.shape
         self.resolution = resolution
         self.origin = np.array(origin)
-        self.there_is_map = True
     
-    def compute(self,map): 
-        '''
-        computes the force field of a given map.
-        Format: Size of nxn, each element containing the force vector [x,y] at given position
-        '''
- 
-        brushfire_map = self._brushfire(map,max_radius=self.obstacle_radius/self.resolution)
+        # initialize force field
+        brushfire_map = self._brushfire(map = self.map/100.0, 
+                                        max_radius=self.obstacle_radius/self.resolution)
         self.force_field = self._create_force_field(brushfire_map)
+    
+        # self.visualize_force_field()
+        # np.save('forcefield.npy',self.map)
+        np.savez('FF.npz', array_with_arrays=self.force_field)
+        # print(self.force_field)
 
-    def _get_force_vector(self,pose):
+        print('-------  Force Field Params  ----------')
+        rospy.loginfo('grid radius: %s', self.obstacle_radius/self.resolution)
+        rospy.loginfo('size: %s', self.force_field.shape)
+        rospy.loginfo('index 10,10: %s', self.force_field[50,50])
+    
         
+
+    def get_force_vector(self,pose):
+        if self.force_field == None:
+            return [0,0]
         grid_pose = self._position_to_map(pose)
         grid_pose = (int(round(grid_pose[0],0)),int(round(grid_pose[1],0)))
-
         return self.force_field[grid_pose] 
     # Transform position with respect the map origin to cell coordinates
 
-    def _brushfire(self,map, max_radius):
+    def _brushfire(self,map,max_radius):
         '''
         '''
         map_shape = np.shape(map)
@@ -87,6 +102,26 @@ class PotentialField:
             queue = new_queue
         return map
 
+    def _create_force_field(self, brushfire_map):
+
+        map_shape = brushfire_map.shape
+
+        gradient_direction = np.arctan2(np.gradient(brushfire_map, axis=0), 
+                                        np.gradient(brushfire_map, axis=1))
+
+        brushfire_norm = 1 - brushfire_map / brushfire_map.max()
+
+        force_field = np.empty(map_shape, dtype=object)
+        for r in range(map_shape[0]):
+            for c in range(map_shape[1]):
+                angle_radians = gradient_direction[r,c]
+                # scale the force field vector by the distance (from brushfire algo)
+                dx = brushfire_norm[r,c] * np.cos(angle_radians)
+                dy = brushfire_norm[r,c] * np.sin(angle_radians)
+                force_field[r,c] = np.array([dx,dy])
+        
+        return force_field
+
     def _position_to_map(self, p):
         # TODO: convert world position to map coordinates. If position outside map return `[]` or `None`
 
@@ -95,7 +130,7 @@ class PotentialField:
 
         mx = (p[0]-self.origin[0])/self.resolution 
         my = (p[1]-self.origin[1])/self.resolution
-        if self.__in_map__([mx,my]):
+        if self._in_map([mx,my]):
             return [mx,my]
         return [] 
     
@@ -108,4 +143,19 @@ class PotentialField:
         if mx >= self.map.shape[0]-1 or my >= self.map.shape[1]-1 or mx < 0 or my < 0:
             return False 
         return True
+    
+    # def visualize_force_field(self, arrow_length = 4, arrow_head_width = 1):
+    #     fig, ax = plt.subplots()
+
+    #     # Plot arrows at specified angles
+    #     for r in range(self.map_dim[0]):
+    #         for c in range(self.map_dim[1]):
+    #             if r%7 == 0 and c%7 == 0 and self.map[r,c]!=1:
+    #                 dx,dy = arrow_length*self.force_field[r,c]             
+    #                 arrow = patches.FancyArrow(c,r, dx, dy, head_width=arrow_head_width, color='red')
+    #                 ax.add_patch(arrow)
+
+    #     plt.matshow(np.zeros(self.map_dim))
+    #     plt.xlabel('Force Field',fontsize=16)
+    #     plt.show()
     
