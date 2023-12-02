@@ -60,9 +60,16 @@ def find_neighbors(boid):
         neighbors = []
         for i in range(n_boids):
             # Skip if boid is self or if boid has not been created yet
+            if boids[i] == None:
+                continue
             if boids[i] != boid :
-                angle_diff = abs(boids[i].get_theta() - boid.get_theta())
-                angle_diff = math.degrees((angle_diff + np.pi) % (2 * np.pi) - np.pi)
+                dx = boids[i].get_pos()[0] - boid.get_pos()[0]
+                dy = boids[i].get_pos()[1] - boid.get_pos()[1]
+                # np.degrees only used for visualization not final code!!
+                alpha= np.degrees(math.atan2(dy,dx))
+                angle_diff = abs(alpha - boid.get_theta())
+                print(angle_diff)
+                # angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi
                 if abs(angle_diff) < boid.local_theta / 2:
                     distance = np.linalg.norm(np.array(boid.get_pos()) - np.array(boids[i].get_pos()))
                     if distance <= boid.local_r:
@@ -79,7 +86,7 @@ neighs = [b.get_pose() for b in neighbors]
 print('all boids:', len(characters))
 print('neighbor boids:', len(neighs))
 
-visualize_neighborhoods_2d(character, characters, neighs, percep_field[0], percep_field[1])
+# visualize_neighborhoods_2d(character, characters, neighs, percep_field[0], percep_field[1])
 
 # visualize_neighborhoods_2d(characters, boid, neighborhood, neighborhood_distance, field_of_view)
 
