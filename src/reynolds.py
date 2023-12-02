@@ -4,7 +4,7 @@ import rospy
 from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
-
+import math
 import numpy as np
 
 from utils.state_tf  import pose_msg_to_state
@@ -78,7 +78,8 @@ class Reynolds:
             if self.boids[i] != boid :
                 dx = self.boids[i].get_pos()[0] - boid.get_pos()[0]
                 dy = self.boids[i].get_pos()[1] - boid.get_pos()[1]
-                angle_diff = abs(self.boids[i].get_theta() - boid.get_theta())
+                alpha= math.atan2(dy,dx)
+                angle_diff = abs(alpha - boid.get_theta())
                 angle_diff = (angle_diff + np.pi) % (2 * np.pi) - np.pi
                 if abs(angle_diff) < boid.local_theta / 2:
                     distance = np.linalg.norm(np.array(boid.get_pos()) - np.array(self.boids[i].get_pos()))

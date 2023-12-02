@@ -43,7 +43,8 @@ def find_neighborhood(character, characters, neighborhood_distance, field_of_vie
         if other_char != character:
             dx = other_char[0] - character[0]
             dy = other_char[1] - character[1]
-            angle_diff = abs(other_char[2] - character[2])
+            alpha = math.atan2(dy,dx)
+            angle_diff = abs(alpha - character[2])
             #to normalize the angle difference to fall within the range
             angle_diff = (angle_diff + math.pi) % (2 * math.pi) - math.pi
 
@@ -61,7 +62,7 @@ def main():
     num_boids=10
     boids_position =  [[random.uniform(0, 10), random.uniform(0, 10), random.uniform(0, 2 * math.pi)] for _ in range(num_boids)]
 
-    neighborhood_distance = 0.75
+    neighborhood_distance = 2
     field_of_view = math.pi * (270 / 180)  # Convert 270 degrees to radians
 
     neighborhoods = []
