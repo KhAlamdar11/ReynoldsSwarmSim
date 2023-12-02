@@ -11,5 +11,6 @@ local_r: 0.5
 local_theta: 180.0
 
 # obstacle params
-obs_r:  1.0 # for both see-to-avoid and pot field
-ang_inc: 10 # for see-to-avoid only
+obs_r:  1.5 # for both see-to-avoid and pot field
+step_angle : 0.174533 #10 in radian 
+max_steering_angle : 6.28 #10 in radian

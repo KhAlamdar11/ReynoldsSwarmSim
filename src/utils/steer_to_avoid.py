@@ -1,10 +1,11 @@
+import rospy
 import numpy as np
 import math
 from ompl import base as ob
 from ompl import geometric as og
 
 
-class Steer_to_avoid:
+class SteerToAvoid:
 
     # Constructor
     def __init__(self,obstacle_radius,step_angle,max_steering_angle):
@@ -31,11 +32,14 @@ class Steer_to_avoid:
         self.map_dim = self.map.shape
         self.resolution = resolution
         self.origin = np.array(origin)
-        self.there_is_map = True
+        rospy.loginfo('map dimensions: %s', self.map_dim)
     
-    def get_steering_direction(self, boid):
-        boid_x, boid_y = boid
-        boid_theta = math.atan2(boid_y,boid_x)
+    def _get_steering_direction(self, boid_pos, boid_vel):
+        boid_x, boid_y = boid_pos
+
+        boid_theta = math.atan2(boid_vel[1],boid_vel[0])
+
+        print('Steering angle (Original): ', boid_theta)
         steering_adjustment = 0
 
         lookahead_x = boid_x + self.obstacle_radius * math.cos(boid_theta)
@@ -46,36 +50,56 @@ class Steer_to_avoid:
             return boid_theta  # Return the original angle if outside the map
 
         grid_x, grid_y = int(map_coords[0]), int(map_coords[1])
-
+        
         while self.map[grid_y][grid_x] == 100 and abs(steering_adjustment) <= self.max_steering_angle:
+
+            print('CELL BUSY', grid_y,grid_x)
             steering_adjustment += self.step_angle
             new_theta = boid_theta + steering_adjustment
 
-            new_grid_x = int(boid_x + self.obstacle_radius * math.cos(new_theta))
-            new_grid_y = int(boid_y + self.obstacle_radius * math.sin(new_theta))
+            print('Added new theta (add): ', new_theta)
 
-            if self.map[new_grid_y][new_grid_x] != 100:
+            new_x = boid_x + self.obstacle_radius * math.cos(new_theta)
+            new_y = boid_y + self.obstacle_radius * math.sin(new_theta)
+            print('catesian: ', new_x,new_y)
+            new_grid_x, new_grid_y = self._position_to_map([new_x, new_y])
+            print('grid: ', new_grid_x,new_grid_y)
+
+            if self.map[new_grid_y,new_grid_x] != 100:
                 boid_theta = new_theta
+                print("CELL FREE 1: ", new_grid_y,new_grid_x)
                 break
 
             new_theta = boid_theta - steering_adjustment
 
-            new_grid_x = int(boid_x + self.obstacle_radius * math.cos(new_theta))
-            new_grid_y = int(boid_y + self.obstacle_radius * math.sin(new_theta))
+            print('Added new theta (sub): ', new_theta)
 
-            if self.map[new_grid_y][new_grid_x] != 100:
+            new_x = boid_x + self.obstacle_radius * math.cos(new_theta)
+            new_y = boid_y + self.obstacle_radius * math.sin(new_theta)
+
+            new_grid_x, new_grid_y = self._position_to_map([new_x, new_y])
+
+            if self.map[new_grid_y,new_grid_x] != 100:
                 boid_theta = new_theta
+                print("CELL FREE 2: ", new_grid_y,new_grid_x)
                 break
 
+            if steering_adjustment == 0.0:
+                return None 
         return boid_theta
     
-    def compute(self,map,boid): 
-        steering_angle = self.get_steering_direction(map,boid)
+    def compute(self,boid_pose, boid_vel): 
+        steering_angle = self._get_steering_direction(boid_pose, boid_vel)
+        
+        if steering_angle is None:
+            return [0.0,0.0]
+        
         self.steering_force = self._create_steering_force(steering_angle)
         return self.steering_force
 
 
-    def _create_steering_force(steering_angle):
+    def _create_steering_force(self,steering_angle):
+        print('Steering angle (NEW): ', steering_angle)
         fx= math.cos(steering_angle)
         fy= math.sin(steering_angle)
         steering_force=[fx,fy]
@@ -89,7 +113,7 @@ class Steer_to_avoid:
         mx = (p[0]-self.origin[0])/self.resolution 
         my = (p[1]-self.origin[1])/self.resolution
         if self._in_map([mx,my]):
-            return [mx,my]
+            return [int(round(mx)),int(round(my))]
         return [] 
     
     def _in_map(self, loc):
