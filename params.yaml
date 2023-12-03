@@ -2,10 +2,37 @@
 n_boids: 10
 
 # behavior weights
-w_a: 0.3
-w_c: 0.3
-w_s: 0.4
+w_a: &w_a 0.6 # Reusable anchor**
+w_c: &w_c 0.6
+w_s: &w_s 0.4
 
 # neighborhood params
-local_r: 1
+local_r: 1.9
 local_theta: 270.0
+
+# Desired goal
+goal_x: 3.0
+goal_y: 2.0
+goal_radius: 5.0
+goal_tolerance: 0.03
+inter_goal_dist: 0.3 # Ratio of distance between two goals
+
+# Set multiple goals as a list of [x, y, radius, tolerance]
+goal_list: 
+  - [3.0, 2.0, 5.0, 0.03]
+  - [3.0, 2.0, 5.0, 0.03]
+
+# Kinematic params
+max_speed: 2.9
+max_acc: 0.8
+
+# Number of leader
+n_leader: 5 # Should not be greater than 7
+leader_method: 0 # 0: Closest to goal, 1: ConvexHull
+
+# Prioritized Acceleration
+use_prioritized_acc: True
+priority_list: 
+  - '_separation': *w_s
+  - '_alignment': *w_a
+  - '_cohesion': *w_c
