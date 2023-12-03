@@ -13,7 +13,6 @@ def wrap_angle(angle):
 
 class PotentialField:
 
-    # Constructor
     def __init__(self, obstacle_radius):
         # map: 2D array of integers which categorizes world occupancy
         self.map = None 
@@ -34,7 +33,7 @@ class PotentialField:
         # Force field for potential function
         self.force_field = None
     
-    # Set occupancy map, its resolution and origin. 
+    # Set occupancy map, and create initial force field. 
     def set(self, data, resolution, origin):
     
         print(' In set Map')
@@ -60,7 +59,7 @@ class PotentialField:
         rospy.loginfo('size: %s', self.force_field.shape)
         rospy.loginfo('index 10,10: %s', self.force_field[50,50])
     
-        
+    #_____________________________  main call function  ___________________________________    
 
     def get_force_vector(self,pose):
         if self.force_field == None:
@@ -68,10 +67,12 @@ class PotentialField:
         grid_pose = self._position_to_map(pose)
         grid_pose = (int(round(grid_pose[0],0)),int(round(grid_pose[1],0)))
         return self.force_field[grid_pose] 
-    # Transform position with respect the map origin to cell coordinates
+    
+    #_____________________________  algorithms  ___________________________________
 
     def _brushfire(self,map,max_radius):
         '''
+        Compute the potential field created by obstacles via brushfire algo
         '''
         map_shape = np.shape(map)
 
@@ -103,7 +104,9 @@ class PotentialField:
         return map
 
     def _create_force_field(self, brushfire_map):
-
+        '''
+        Create force field using gradient of the brushfire and magnitude
+        '''
         map_shape = brushfire_map.shape
 
         gradient_direction = np.arctan2(np.gradient(brushfire_map, axis=0), 
@@ -122,12 +125,9 @@ class PotentialField:
         
         return force_field
 
+    #_____________________________  helper funcs  ___________________________________
+
     def _position_to_map(self, p):
-        # TODO: convert world position to map coordinates. If position outside map return `[]` or `None`
-
-        # print('point', p)
-        # print('self.origin', self.origin)
-
         mx = (p[0]-self.origin[0])/self.resolution 
         my = (p[1]-self.origin[1])/self.resolution
         if self._in_map([mx,my]):
@@ -143,19 +143,5 @@ class PotentialField:
         if mx >= self.map.shape[0]-1 or my >= self.map.shape[1]-1 or mx < 0 or my < 0:
             return False 
         return True
-    
-    # def visualize_force_field(self, arrow_length = 4, arrow_head_width = 1):
-    #     fig, ax = plt.subplots()
 
-    #     # Plot arrows at specified angles
-    #     for r in range(self.map_dim[0]):
-    #         for c in range(self.map_dim[1]):
-    #             if r%7 == 0 and c%7 == 0 and self.map[r,c]!=1:
-    #                 dx,dy = arrow_length*self.force_field[r,c]             
-    #                 arrow = patches.FancyArrow(c,r, dx, dy, head_width=arrow_head_width, color='red')
-    #                 ax.add_patch(arrow)
-
-    #     plt.matshow(np.zeros(self.map_dim))
-    #     plt.xlabel('Force Field',fontsize=16)
-    #     plt.show()
     

@@ -50,33 +50,41 @@ class SteerToAvoid:
     def calc_lookahead (self,boid_x,boid_y,boid_theta):
         new_x = boid_x + self.obstacle_radius * math.cos(boid_theta)
         new_y = boid_y + self.obstacle_radius * math.sin(boid_theta)
-        new_grid_x, new_grid_y = self._position_to_map([new_x, new_y])
-        return new_grid_x, new_grid_y
+        return self._position_to_map([new_x, new_y])
+        # return new_grid_x, new_grid_y
          
+    def turn_back(self,boid_theta):
+        return boid_theta + 3.14  # Return the opposite angle if outside the map
     
     def _get_steering_direction(self, boid_pos, boid_vel):
         boid_x, boid_y = boid_pos
         boid_theta = math.atan2(boid_vel[1],boid_vel[0]) #we calc the theta using the direction of velocity
         steering_adjustment = 0  #no adjustment done yet
 
-        map_coords= self.calc_lookahead (self,boid_x,boid_y,boid_theta)
+        map_coords= self.calc_lookahead(boid_x,boid_y,boid_theta)
+
+        if map_coords == []:
+            return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
+        
         grid_x, grid_y = int(map_coords[0]), int(map_coords[1])
 
-        if not map_coords:
-            boid_theta == 1.56
-            return boid_theta  # Return the opposite angle if outside the map
-        
         while self.map[grid_y][grid_x] == 100 and abs(steering_adjustment) <= self.max_steering_angle:
             steering_adjustment += self.step_angle
 
             new_theta = boid_theta + steering_adjustment
-            new_grid_x, new_grid_y= self.calc_lookahead (self,boid_x,boid_y,new_theta)
+            map_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
+            if map_coords == []:
+                return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
+            new_grid_x, new_grid_y = map_coords
             if self.map[new_grid_y,new_grid_x] != 100:
                 boid_theta = new_theta
                 break
 
             new_theta = boid_theta - steering_adjustment
-            new_grid_x, new_grid_y= self.calc_lookahead (self,boid_x,boid_y,new_theta)
+            map_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
+            if map_coords == []:
+                return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
+            new_grid_x, new_grid_y = map_coords
             if self.map[new_grid_y,new_grid_x] != 100:
                 boid_theta = new_theta
                 break

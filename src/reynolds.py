@@ -114,8 +114,6 @@ class Reynolds:
 
 
     def run(self,event):
-        print("IN RUN!!!!!!")
-        # TODO: Change the control of the number of boids from the simulator.
         # Ensure that all boids have been created and have a position and velocity before running the algorithm
         for b in self.boids:
             if b == None:
@@ -127,8 +125,9 @@ class Reynolds:
             neighbors = self.find_neighbors(b)
             b.set_neighbors(neighbors)
 
-            cmd_vel = b.update(self.boids)
-            # cmd_vel = b.test_obstacle_avoidance(self.avoid_obstacles)
+            # cmd_vel = b.update(self.boids)
+            ## Test obstacle avoidance in isolation
+            cmd_vel = b.test_obstacle_avoidance(self.avoid_obstacles)
 
             #publish the cmd velocity to the appropriate boids topic
             self.publish_cmd_vel(b, cmd_vel)
