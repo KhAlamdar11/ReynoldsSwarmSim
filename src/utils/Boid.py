@@ -124,16 +124,16 @@ class Boid:
     
     def test_obstacle_avoidance(self,ob=None):
         print('in test obs avoidance')
-        if self.id == 1:
-            return [0.0,0.0]
+        # if self.id == 1:
+        #     return [0.0,0.0]
         vel = np.array([0.2, 0.0])
         # vel += np.array(ob.get_force_vector(self.get_pos()))
-        print("BOID ID:", self.id)
+        # print("BOID ID:", self.id)
         obs_vel = 0.8*np.array(ob.compute(self.get_pos(),self.get_linvel())) 
         
         if obs_vel[0] != 0.0 and obs_vel[1] != 0.0:
             vel = obs_vel
         
-        print('Velocity: ', vel)
+        # print('Velocity: ', vel)
         # print('Velocity Frome: ', np.array(ob.compute(self.get_pos(),self.get_linvel())) )
         return vel
