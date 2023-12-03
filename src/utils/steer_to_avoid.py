@@ -61,33 +61,42 @@ class SteerToAvoid:
         boid_theta = math.atan2(boid_vel[1],boid_vel[0]) #we calc the theta using the direction of velocity
         steering_adjustment = 0  #no adjustment done yet
 
-        map_coords= self.calc_lookahead(boid_x,boid_y,boid_theta)
+        map_coords = self.calc_lookahead(boid_x,boid_y,boid_theta)
 
         if map_coords == []:
             return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
         
         grid_x, grid_y = int(map_coords[0]), int(map_coords[1])
 
-        while self.map[grid_y][grid_x] == 100 and abs(steering_adjustment) <= self.max_steering_angle:
+        print("checking: ", grid_y, grid_x)
+
+        while self.map[grid_x][grid_y] == 100: #and abs(steering_adjustment) <= self.max_steering_angle:
             steering_adjustment += self.step_angle
 
             new_theta = boid_theta + steering_adjustment
             map_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
+
+            print("BUSY ini: ", map_coords[1],map_coords[0])
+
             if map_coords == []:
                 return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
             new_grid_x, new_grid_y = map_coords
-            if self.map[new_grid_y,new_grid_x] != 100:
+            if self.map[new_grid_x,new_grid_y] != 100:
                 boid_theta = new_theta
                 break
+
+            print("BUSY add: ", new_grid_x,new_grid_y)
 
             new_theta = boid_theta - steering_adjustment
             map_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
             if map_coords == []:
                 return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
             new_grid_x, new_grid_y = map_coords
-            if self.map[new_grid_y,new_grid_x] != 100:
+            if self.map[new_grid_x,new_grid_y] != 100:
                 boid_theta = new_theta
                 break
+
+            print("BUSY sub: ", new_grid_x,new_grid_y)
 
             if steering_adjustment == 0.0:
                 return None 
@@ -101,6 +110,8 @@ class SteerToAvoid:
         return steering_force
     
     def compute(self,boid_pose, boid_vel): 
+        if boid_vel == [0.0,0.0]:
+            return [0.0,0.0]
         steering_angle = self._get_steering_direction(boid_pose, boid_vel)
         if steering_angle is None:
             return [0.0,0.0]

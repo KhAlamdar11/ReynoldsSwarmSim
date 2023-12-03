@@ -1,5 +1,5 @@
 # number of boids
-n_boids: 5
+n_boids: 2
 
 # behavior weights
 w_a: 0.3
