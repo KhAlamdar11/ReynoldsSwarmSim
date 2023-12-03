@@ -35,9 +35,9 @@ class SteerToAvoid:
     def _position_to_map(self, p):
         mx = (p[0]-self.origin[0])/self.resolution 
         my = (p[1]-self.origin[1])/self.resolution
-        if self._in_map([mx,my]):
-            return [int(round(mx)),int(round(my))]
-        return [] 
+        # if self._in_map([mx,my]):
+        return [int(round(mx)),int(round(my))]
+        # return [] 
     
     def _in_map(self, loc):
         '''
@@ -103,8 +103,8 @@ class SteerToAvoid:
         boid_theta = math.atan2(boid_vel[1],boid_vel[0]) #we calc the theta using the direction of velocity
 
         map_coords, cart_coords = self.calc_lookahead(boid_x,boid_y,boid_theta)
-        if map_coords == []:
-            return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
+        # if map_coords == []:
+        #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
         grid_x, grid_y = int(map_coords[0]), int(map_coords[1])
         self.path_valid = self.check_path(boid_pos,cart_coords)
         
@@ -114,25 +114,32 @@ class SteerToAvoid:
             # check right
             new_theta = boid_theta + steering_adjustment
             map_coords, cart_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
-            if map_coords == []:
-                return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
-            new_grid_x, new_grid_y = map_coords
+            # if map_coords == []:
+            #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
             self.path_valid = self.check_path(boid_pos,cart_coords)
             print("path valid: ", self.path_valid, " ", boid_pos, " to ", map_coords)
-            if self.map[new_grid_x,new_grid_y] != 100 and self.path_valid:
+            # if self.map[new_grid_x,new_grid_y] != 100 and self.path_valid:
+            if self.path_valid:
                 boid_theta = new_theta
                 break
+            new_grid_x, new_grid_y = map_coords
+            if not(self._in_map([new_grid_x,new_grid_y])):
+                new_grid_x, new_grid_y = new_grid_x/2, new_grid_y/2
 
             # check left
             new_theta = boid_theta - steering_adjustment
             map_coords, cart_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
-            if map_coords == []:
-                return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
-            new_grid_x, new_grid_y = map_coords
+            # if map_coords == []:
+            #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
+            
             self.path_valid = self.check_path(boid_pos,cart_coords)
-            if self.map[new_grid_x,new_grid_y] != 100 and self.path_valid:
+            # if self.map[new_grid_x,new_grid_y] != 100 and self.path_valid:
+            if self.path_valid:
                 boid_theta = new_theta
                 break
+            new_grid_x, new_grid_y = map_coords
+            if not(self._in_map([new_grid_x,new_grid_y])):
+                new_grid_x, new_grid_y = new_grid_x/2, new_grid_y/2
 
             if steering_adjustment == 0.0:
                 return None 

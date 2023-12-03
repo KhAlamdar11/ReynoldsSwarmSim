@@ -126,7 +126,7 @@ class Boid:
         print('in test obs avoidance')
         # if self.id == 1:
         #     return [0.0,0.0]
-        vel = np.array([0.2, 0.0])
+        vel = np.array([0.8, 0.0])
         # vel += np.array(ob.get_force_vector(self.get_pos()))
         # print("BOID ID:", self.id)
         obs_vel = 0.8*np.array(ob.compute(self.get_pos(),self.get_linvel())) 
