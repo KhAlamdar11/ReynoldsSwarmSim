@@ -1,22 +1,22 @@
 # number of boids
-n_boids: 5
+n_boids: 7
 
 # behavior weights
-w_a: &w_a 0.6 # Reusable anchor**
-w_c: &w_c 0.6
-w_s: &w_s 0.4
-w_arrival: &w_arrival 0.2
-w_steer_to_avoid: &w_steer_to_avoid 0.4
+w_a: &w_a 0.5 # Reusable anchor**
+w_c: &w_c 0.7
+w_s: &w_s 0.5
+w_arrival: &w_arrival 0.3
+w_steer_to_avoid: &w_steer_to_avoid 1.35
 
 # neighborhood params
 local_r: 1.9
 local_theta: 360.0
 
 # Desired goal
-goal_x: 3.0
+goal_x: 2.5
 goal_y: 2.0
 goal_radius: 5.0
-goal_tolerance: 0.03
+goal_tolerance: 1.5
 inter_goal_dist: 0.3 # Ratio of distance between two goals
 
 # Set multiple goals as a list of [x, y, radius, tolerance]
@@ -26,17 +26,18 @@ goal_list:
 
 # Kinematic params
 max_speed: 2.9
-max_acc: 0.8
+max_acc: 1.8
 
 # Number of leader
-n_leaders: 3 # Should not be greater than 7
+n_leaders: 7 # Should not be greater than 7
 leader_method: 0 # 0: Closest to goal, 1: ConvexHull
+leader_type: 0 # 0: Dynamic, 1: Fixed
 
 # Prioritized Acceleration
 use_prioritized_acc: True
 priority_list: 
-  - '_steer_to_avoid': *w_steer_to_avoid
   - '_arrival': *w_arrival
+  - '_steer_to_avoid': *w_steer_to_avoid
   - '_separation': *w_s
   - '_alignment': *w_a
   - '_cohesion': *w_c
@@ -45,3 +46,6 @@ priority_list:
 obs_r:  1.0 # for both see-to-avoid and pot field
 step_angle : 0.174533 #10 in radian 
 max_steering_angle : 6.28 #10 in radian
+
+# Arrival-specific params
+hard_arrival: True # For hard arrival, the boid will ignore all other behaviors and only focus on arrival.

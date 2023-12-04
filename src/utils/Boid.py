@@ -29,6 +29,9 @@ class Boid:
         # List of behaviors in order of priority*
         self.behavior_list = kwargs['behavior_list']
 
+        # Hard Arrival (Hard Stop)
+        self.hard_arrival = kwargs['hard_arrival']
+
     def get_pos(self):
         '''
         Returns position as [x,y]
@@ -120,8 +123,13 @@ class Boid:
         if leader:
             cmd_vel = np.array([0., 0.]) if acc[0] == 0.0 and acc[1] == 0.0 else np.tanh(acc) # **
         else:
-            cmd_vel = acc # NOTE: This is doesn't use the appropriate motion model because of the obstacle avoidance.
-            # cmd_vel = np.array(self.get_linvel()) + acc
+            cmd_vel = acc # NOTE: This is does/n't use the appropriate motion model because of the obstacle avoidance.
+            # cmd_vel = acc + self.get_linvel() # NOTE: This is doesn't use the appropriate motion model because of the obstacle avoidance.
+            # cmd_vel = 0.1 * np.tanh(np.array(self.get_linvel())) + acc
+            # vel_mag = np.linalg.norm(self.get_linvel())
+            # acc_mag = np.linalg.norm(acc)
+            # vel_acc = vel_mag * acc/acc_mag if acc_mag != 0 else np.array([0., 0.])
+            # cmd_vel = vel_acc + acc
 
         # print("cmd_vel: ", cmd_vel, acc)
 
@@ -162,13 +170,23 @@ class Boid:
         ''' Calls behaviours, and computes the net weighted acceleration. '''
         acc = np.array([0., 0.])
         for behavior in behavior_list:
-            print("Behavior: ", behavior)
+            # print("Behavior: ", behavior)
             acc_request = self.behavior_function(behavior)
             if list(behavior.keys())[0] == '_steer_to_avoid' and not (acc_request[0] != 0.0 and acc_request[1] != 0.0):
                 continue
             # If there is no goal (current boid is a follower), and this behavior is arrival, then set the acceleration to 0.
             if not leader and list(behavior.keys())[0] == '_arrival':
                 acc_request = np.array([0., 0.])
+
+            # ------------------------------------------------------------------------
+            # If there is a goal (current boid is a leader), and this behavior is arrival, then check if the goal has been reached.
+            elif leader and list(behavior.keys())[0] == '_arrival':
+                if self.hard_arrival:
+                    if acc_request[0] == 0.0 and acc_request[1] == 0.0:
+                        return acc_request + acc
+                        # return np.array([0.02, 0.02])
+            # ------------------------------------------------------------------------
+
             if use_prioritized_acc:
                 acc_mag = np.linalg.norm(acc_request)
                 if np.linalg.norm(acc) + acc_mag > self.max_acc:

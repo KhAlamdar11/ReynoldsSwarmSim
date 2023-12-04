@@ -47,9 +47,11 @@ class Reynolds:
             rospy.logwarn('n_leaders cannot be greater than n_boids. Setting n_leaders to n_boids.')
 
         self.leader_method = rospy.get_param('~leader_method')
+        self.leader_type = rospy.get_param('~leader_type')
         self.inter_goal_dist = rospy.get_param('~inter_goal_dist')
         self.use_prioritized_acc = rospy.get_param('~use_prioritized_acc')
         self.priority_list = rospy.get_param('~priority_list')
+        self.hard_arrival = rospy.get_param('~hard_arrival')
 
         rospy.loginfo('n_boids: %s', self.n_boids)
         rospy.loginfo('weights [w_a, w_c, w_s]: %s', self.weights)
@@ -81,13 +83,11 @@ class Reynolds:
                 weight = list(behavior.values())[0]
                 self.behavior_list.append({name: [weight, self.all_behaviors[name]]})
 
-
-        print("Behavior list: ", len(self.behavior_list))
-
         self.kwargs = {'max_speed': self.max_speed, 'use_prioritized_acc': self.use_prioritized_acc,
-                       'behavior_list': self.behavior_list, 'max_acc': self.max_acc}
+                       'behavior_list': self.behavior_list, 'max_acc': self.max_acc, 'hard_arrival': self.hard_arrival}
 
         self.compute_goals = True if self.n_leaders > 0 else False
+        self.boids_created = False
 
         # Create subscribers and publishers to n robots dynamically
         self.subs = []
@@ -123,6 +123,9 @@ class Reynolds:
         else:
             # Create boid instance
             self.boids[robot_id] = Boid(robot_id, self.weights, self.percep_field, x, **self.kwargs)
+            # Set a flag to know when all boids have been created
+            if None not in self.boids:
+                self.boids_created = True
 
     def map_cb(self, gridmap):
         env = np.array(gridmap.data).reshape(gridmap.info.height, gridmap.info.width).T
@@ -162,7 +165,8 @@ class Reynolds:
             distances = np.linalg.norm(positions[closest_boids] - goal[:2], axis=1)
             closest_boid = closest_boids[np.argmin(distances)]
             # Delete the boid from the closest boids so that it is not assigned to another goal
-            closest_boids = np.delete(closest_boids, np.argmin(distances))
+            if self.leader_type == 0:
+                closest_boids = np.delete(closest_boids, np.argmin(distances))
             self.boids[closest_boid].set_goal(goal)
 
         # Plot the goals assigned to each boid
@@ -250,7 +254,7 @@ class Reynolds:
         self.pubs[boid.id].publish(cmd_vel)
 
 
-    def run(self,event):
+    def run(self, event):
         # Ensure that all boids have been created and have a position and velocity before running the algorithm
         for b in self.boids:
             if b == None:
@@ -263,12 +267,13 @@ class Reynolds:
             b.set_neighbors(neighbors)
 
             # Generate goals (if necessary) for leader boids.
-            if self.compute_goals:
+            if self.compute_goals and self.boids_created:
                 if self.leader_method == 0:
                     self.generate_goals()
                 elif self.leader_method == 1:
                     self.convex_hull()
-                self.compute_goals = False
+                if self.leader_type == 1:
+                    self.compute_goals = False # IF THIS IS FALSE, THE LEADERS WILL BE FIXED
             cmd_vel = b.update(self.boids)
 
             ## Test obstacle avoidance in isolation
