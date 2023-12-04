@@ -1,8 +1,9 @@
 import rospy
 import numpy as np
 import math
-import copy
-from scipy.ndimage import morphology
+from ompl import base as ob
+from ompl import geometric as og
+
 
 class SteerToAvoid:
 
@@ -104,9 +105,8 @@ class SteerToAvoid:
         # if map_coords == []:
         #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
         grid_x, grid_y = int(map_coords[0]), int(map_coords[1])
-        self.path_valid = self.check_path(boid_pos,cart_coords)
-        
-        while not(self.path_valid): #and abs(steering_adjustment) <= self.max_steering_angle:
+
+        while self.map[grid_y][grid_x] == 100 and abs(steering_adjustment) <= self.max_steering_angle:
             steering_adjustment += self.step_angle
 
             # check right
@@ -150,11 +150,15 @@ class SteerToAvoid:
         fy= math.sin(steering_angle)
         return np.array([fx,fy])
     
-    def _steer_to_avoid(self, boid_pose, boid_vel, boid_goal=None): 
-        if boid_vel == [0.0,0.0]:
-            return np.array([0.0,0.0])
-        steering_angle = self._get_steering_direction(boid_pose[:2], boid_vel) #TODO: check if this is correct
+    def compute(self,boid_pose, boid_vel): 
+        steering_angle = self._get_steering_direction(boid_pose, boid_vel)
         if steering_angle is None:
             return np.array([0.0, 0.0])
         self.steering_force = self._create_steering_force(steering_angle)
         return self.steering_force
+
+
+
+
+
+    
