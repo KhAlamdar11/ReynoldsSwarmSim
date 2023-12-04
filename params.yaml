@@ -1,5 +1,5 @@
 # number of boids
-n_boids: 5
+n_boids: 10
 
 # behavior weights
 w_a: &w_a 0.6 # Reusable anchor**
