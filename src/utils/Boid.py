@@ -2,7 +2,7 @@ import numpy as np
 
 class Boid:
 
-    def __init__(self,id,weights,percep_field,state):
+    def __init__(self, id, weights, percep_field, state, **kwargs):
         
         self.id = id
         self.w_a, self.w_c, self.w_s = weights
@@ -13,6 +13,21 @@ class Boid:
 
         # list of neigbors as boid objects
         self.neighbors = None
+
+        # Desired goal - [x, y, radius, tolerance]
+        self.goal = None
+
+        # Max speed
+        self.max_speed = kwargs['max_speed']
+
+        # Max acceleration
+        self.max_acc = kwargs['max_acc']
+
+        # Use prioritized acceleration
+        self.use_prioritized_acc = kwargs['use_prioritized_acc']
+
+        # List of behaviors in order of priority*
+        self.behavior_list = kwargs['behavior_list']
 
     def get_pos(self):
         '''
@@ -50,6 +65,12 @@ class Boid:
         '''
         return self.state[3:]
     
+    def get_goal(self):
+        '''
+        Returns goal as [x,y,radius,tolerance]
+        '''
+        return self.goal
+    
     def set_state(self,state):
         '''
         Updates state of boid
@@ -61,8 +82,25 @@ class Boid:
         Updates the neighbors of the boid
         '''
         self.neighbors = neighbor
+
+    def set_goal(self, goal):
+        '''
+        Updates the goal of the boid
+        '''
+        self.goal = goal
+
+    def behavior_function(self, behavior):
+        '''
+        Dynamically calls the behavior function
+        '''
+        name = list(behavior.keys())[0]
+        weight = list(behavior.values())[0][0]
+        constructor = list(behavior.values())[0][1]
+        if constructor == 'self':
+            return weight * getattr(self, name)()
+        return weight * getattr(constructor, name)(self.get_pose(), self.get_linvel(), self.get_goal())
             
-    def update(self,boids=None):
+    def update(self, boids=None):
         '''
         Calls and combines behaviors.
 
@@ -74,64 +112,80 @@ class Boid:
         '''
 
         # Compute acceleration
-        acc = self._combine_behaviours()
+        # Check if the boid is a leader
+        leader = False if self.get_goal() == None else True
+        acc = self._combine_behaviors(self.behavior_list, leader, self.use_prioritized_acc)
 
-        # TODO: Compute desired velocities from desired accel
-        cmd_vel = self.get_linvel() + acc
+        # # Compute velocity
+        if leader:
+            cmd_vel = np.array([0., 0.]) if acc[0] == 0.0 and acc[1] == 0.0 else np.tanh(acc) # **
+        else:
+            cmd_vel = acc # NOTE: This is doesn't use the appropriate motion model because of the obstacle avoidance.
+            # cmd_vel = np.array(self.get_linvel()) + acc
 
+        # print("cmd_vel: ", cmd_vel, acc)
+
+        # Clip the velocity before returning it. 
+        cmd_vel = np.clip(cmd_vel, -self.max_speed, self.max_speed)
         return cmd_vel
-
 
     def _alignment(self):
         ''' Computes required acceleration due to alignment. '''
-        # TODO
-        acc = [0, 0]
+        acc = np.array([0., 0.])
         if self.neighbors != None and len(self.neighbors) != 0:
             for boid in self.neighbors:
-                acc += np.array(self.get_linvel()) - np.array(boid.get_linvel()) 
+                acc +=  np.array(boid.get_linvel()) - np.array(self.get_linvel()) 
             acc = acc/len(self.neighbors) 
         return acc
-    
 
     def _cohesion(self):
         ''' Computes required acceleration due to cohesion. '''
-        # TODO
-        acc = [0, 0] 
+        acc = np.array([0., 0.]) 
         if self.neighbors != None and len(self.neighbors) != 0:
             for boid in self.neighbors:
-                acc += np.array(self.get_pos()) - np.array(boid.get_pos()) 
+                acc +=  np.array(boid.get_pos()) - np.array(self.get_pos())
             acc = acc/len(self.neighbors) 
         return acc
-    
 
-    def _seperation(self):
+    def _separation(self):
         ''' Computes required acceleration due to seperation. '''
-        # TODO
-        acc = [0, 0]
+        acc = np.array([0., 0.])
         if self.neighbors != None and len(self.neighbors) != 0:
             for boid in self.neighbors:
-                distance = np.array(self.get_pos()) - np.array(boid.get_pos()) 
-                square_distance = (np.linalg.norm(np.array(self.get_pos()) - np.array(boid.get_pos())))**2
+                distance = np.array(boid.get_pos()) - np.array(self.get_pos())
+                square_distance = (np.linalg.norm(np.array(boid.get_pos()) - np.array(self.get_pos())))**2
                 acc += (distance/square_distance)
             acc = acc/len(self.neighbors) 
-        return acc
+        return - acc # Negative because we want to move away from the neighbors.
 
-
-    def _combine_behaviours(self):
+    def _combine_behaviors(self, behavior_list=[], leader=False, use_prioritized_acc=False):
         ''' Calls behaviours, and computes the net weighted acceleration. '''
-        acc = - self.w_a*self._alignment() - self.w_c*self._cohesion() + self.w_s*self._seperation()
+        acc = np.array([0., 0.])
+        for behavior in behavior_list:
+            print("Behavior: ", behavior)
+            acc_request = self.behavior_function(behavior)
+            if list(behavior.keys())[0] == '_steer_to_avoid' and not (acc_request[0] != 0.0 and acc_request[1] != 0.0):
+                continue
+            # If there is no goal (current boid is a follower), and this behavior is arrival, then set the acceleration to 0.
+            if not leader and list(behavior.keys())[0] == '_arrival':
+                acc_request = np.array([0., 0.])
+            if use_prioritized_acc:
+                acc_mag = np.linalg.norm(acc_request)
+                if np.linalg.norm(acc) + acc_mag > self.max_acc:
+                    # Clip the acceleration
+                    return np.clip(acc + acc_request, -self.max_acc, self.max_acc)
+            acc += acc_request
         return acc
-    
+
     def test_obstacle_avoidance(self,ob=None):
         print('in test obs avoidance')
-        vel = np.array([0.2, 0])
-        # vel += np.array(ob.get_force_vector(self.get_pos()))
-        # print("BOID ID:", self.id)
-        obs_vel = 0.5*np.array(ob.compute(self.get_pos(),self.get_linvel())) 
-        
+        vel = np.array([0.8, 0.0])
+        obs_vel = 0.8*np.array(ob._steer_to_avoid(self.get_pose(), self.get_linvel())) 
+        print("obs_vel: ", obs_vel)
+
         if obs_vel[0] != 0.0 and obs_vel[1] != 0.0:
             vel = obs_vel
         
-        print('Velocity: ', vel)
+        # print('Velocity: ', vel)
         # print('Velocity Frome: ', np.array(ob.compute(self.get_pos(),self.get_linvel())) )
         return vel
