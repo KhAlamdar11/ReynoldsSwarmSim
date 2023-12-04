@@ -172,7 +172,7 @@ class Reynolds:
             if boid.get_goal() == None:
                 continue
             plt.plot(boid.get_goal()[0], boid.get_goal()[1], 'ro')
-        plt.show()
+        # plt.show()
 
     def convex_hull(self):
         positions = np.array([boid.get_pos() for boid in self.boids])
@@ -219,7 +219,7 @@ class Reynolds:
             if boid.get_goal() == None:
                 continue
             plt.plot(boid.get_goal()[0], boid.get_goal()[1], 'ro')
-        plt.show()
+        # plt.show()
 
     def find_neighbors(self, boid):
         # Retrieve the position of each boid. 

@@ -68,6 +68,7 @@ class SteerToAvoid:
             if self.map[x,y] == 0:
                 return True  # Free cell
             else:
+                # print('the cell that is false!:', x,y)
                 return False  # Occupied cell
         else:
             return False  # Point is outside the grid boundaries
@@ -77,7 +78,7 @@ class SteerToAvoid:
         new_y = boid_y + self.obstacle_radius * math.sin(boid_theta)
         return self._position_to_map([new_x, new_y]), [new_x,new_y]
 
-    def check_path(self, p1,p2, step_size=0.02):
+    def check_path(self, p1,p2, step_size=0.25):
         waypoints=[]
         dist = np.linalg.norm(np.array(p1) - np.array(p2))
         num_steps = dist / step_size
@@ -87,6 +88,9 @@ class SteerToAvoid:
             x = p1[0] * (1-interpolation) + p2[0] * interpolation
             y = p1[1] * (1-interpolation) + p2[1] * interpolation
             waypoints.append((x,y))
+
+        waypoints = waypoints[1:]
+        
         for w in waypoints:
             if self.is_valid(w) == False:
                 return False
@@ -115,8 +119,7 @@ class SteerToAvoid:
             # if map_coords == []:
             #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
             self.path_valid = self.check_path(boid_pos,cart_coords)
-            print("path valid: ", self.path_valid, " ", boid_pos, " to ", map_coords)
-            # if self.map[new_grid_x,new_grid_y] != 100 and self.path_valid:
+            # print("path valid: ", self.path_valid, " ", boid_pos, " to ", cart_coords)
             if self.path_valid:
                 boid_theta = new_theta
                 break
@@ -145,7 +148,7 @@ class SteerToAvoid:
         return boid_theta
     
     def _create_steering_force(self,steering_angle):
-        print('Steering angle (NEW): ', steering_angle)
+        # print('Steering angle (NEW): ', steering_angle)
         fx= math.cos(steering_angle)
         fy= math.sin(steering_angle)
         return np.array([fx,fy])
