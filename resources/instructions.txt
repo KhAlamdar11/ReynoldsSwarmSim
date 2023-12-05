@@ -1,0 +1,2 @@
+copy the folders to sphero_simulation/sphero_stage/resources
+copy the temp files to sphero_simulation/sphero_stage/world_templates

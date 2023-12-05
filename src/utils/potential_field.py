@@ -13,7 +13,7 @@ def wrap_angle(angle):
 
 class PotentialField:
 
-    def __init__(self, obstacle_radius):
+    def __init__(self, obstacle_radius,a,b):
         # map: 2D array of integers which categorizes world occupancy
         self.map = None 
         self.map_dim = None
@@ -61,7 +61,7 @@ class PotentialField:
     
     #_____________________________  main call function  ___________________________________    
 
-    def get_force_vector(self,pose):
+    def _potential_field(self,pose):
         if self.force_field == None:
             return [0,0]
         grid_pose = self._position_to_map(pose)

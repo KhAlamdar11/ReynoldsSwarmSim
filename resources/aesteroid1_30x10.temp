@@ -1,0 +1,12 @@
+include "definitions.inc"
+
+# load an environment bitmap
+floorplan
+(
+	name "aesteroid1_30x10"
+	bitmap "../maps/aesteroid1_30x10/aesteroid1_30x10.bmp"
+	size [30 10 1]  # duzina sirina visina
+	pose [ 0 0 0 0 ]
+)
+
+# throw in robots

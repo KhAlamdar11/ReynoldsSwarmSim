@@ -1,4 +1,5 @@
 import numpy as np
+import math
 
 class Boid:
 
@@ -7,6 +8,9 @@ class Boid:
         self.id = id
         self.w_a, self.w_c, self.w_s = weights
         self.local_r, self.local_theta = percep_field
+
+        # save poses for plotting later
+        self.poses_list = np.empty((0, 3), dtype=float)
 
         # [x,y,theta,v_x,v_y,w]
         self.state = state
@@ -74,6 +78,13 @@ class Boid:
         '''
         return self.goal
     
+    def get_pos_n_velocity_direction(self):
+        '''
+        Returns pos and direction of movement as [x,y,theta_dir]
+        '''
+        boid_theta = math.atan2(self.state[4],self.state[3]) #we calc the theta using the direction of velocity
+        return np.array([self.state[0], self.state[1], boid_theta])
+    
     def set_state(self,state):
         '''
         Updates state of boid
@@ -135,6 +146,11 @@ class Boid:
 
         # Clip the velocity before returning it. 
         cmd_vel = np.clip(cmd_vel, -self.max_speed, self.max_speed)
+
+        # Save trajectory
+        # self.poses_list = np.vstack((self.poses_list, self.get_pos_n_velocity_direction()))
+        # np.savetxt('/home/alamdar11/Desktop/path_line10x10_potfield.npy', self.poses_list)
+
         return cmd_vel
 
     def _alignment(self):
@@ -173,6 +189,7 @@ class Boid:
             # print("Behavior: ", behavior)
             acc_request = self.behavior_function(behavior)
             if list(behavior.keys())[0] == '_steer_to_avoid' and not (acc_request[0] != 0.0 and acc_request[1] != 0.0):
+                # print("steer to avoid active, acc request: ", acc_request)
                 continue
             # If there is no goal (current boid is a follower), and this behavior is arrival, then set the acceleration to 0.
             if not leader and list(behavior.keys())[0] == '_arrival':

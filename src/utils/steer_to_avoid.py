@@ -18,7 +18,6 @@ class SteerToAvoid:
         self.origin = None            # world position of cell (0, 0) in self.map                      
         self.there_is_map = False          # set method has been called                          
         self.steering_force = None
-
         self.path_valid = True
     
     def set(self, data, resolution, origin):     
@@ -68,7 +67,7 @@ class SteerToAvoid:
             if self.map[x,y] == 0:
                 return True  # Free cell
             else:
-                # print('the cell that is false!:', x,y)
+                # print('the cell that is false!:', point)
                 return False  # Occupied cell
         else:
             return False  # Point is outside the grid boundaries
@@ -103,10 +102,7 @@ class SteerToAvoid:
         steering_adjustment = 0  #no adjustment done yet
         boid_x, boid_y = boid_pos
         boid_theta = math.atan2(boid_vel[1],boid_vel[0]) #we calc the theta using the direction of velocity
-
         map_coords, cart_coords = self.calc_lookahead(boid_x,boid_y,boid_theta)
-        # if map_coords == []:
-        #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
         grid_x, grid_y = int(map_coords[0]), int(map_coords[1])
         self.path_valid = self.check_path(boid_pos,cart_coords)
         
@@ -116,10 +112,7 @@ class SteerToAvoid:
             # check right
             new_theta = boid_theta + steering_adjustment
             map_coords, cart_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
-            # if map_coords == []:
-            #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
             self.path_valid = self.check_path(boid_pos,cart_coords)
-            # print("path valid: ", self.path_valid, " ", boid_pos, " to ", cart_coords)
             if self.path_valid:
                 boid_theta = new_theta
                 break
@@ -130,11 +123,7 @@ class SteerToAvoid:
             # check left
             new_theta = boid_theta - steering_adjustment
             map_coords, cart_coords = self.calc_lookahead(boid_x,boid_y,new_theta)
-            # if map_coords == []:
-            #     return self.turn_back(boid_theta)  # Return the opposite angle if outside the map
-            
             self.path_valid = self.check_path(boid_pos,cart_coords)
-            # if self.map[new_grid_x,new_grid_y] != 100 and self.path_valid:
             if self.path_valid:
                 boid_theta = new_theta
                 break
@@ -154,6 +143,7 @@ class SteerToAvoid:
         return np.array([fx,fy])
     
     def _steer_to_avoid(self, boid_pose, boid_vel, boid_goal=None): 
+        vel_abs = np.linalg.norm(boid_vel)
         if boid_vel == [0.0,0.0]:
             return np.array([0.0,0.0])
         steering_angle = self._get_steering_direction(boid_pose[:2], boid_vel) #TODO: check if this is correct
