@@ -5,9 +5,12 @@ from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
+from visualization_msgs.msg import Marker, MarkerArray
+from std_msgs.msg import ColorRGBA
 
 import math
 import numpy as np
+import tf
 from scipy.spatial import ConvexHull
 import matplotlib.pyplot as plt
 
@@ -98,16 +101,110 @@ class Reynolds:
             self.subs.append(sub)
 
             pub = rospy.Publisher('/robot_{}/cmd_vel'.format(i), Twist, queue_size=1)
-            self.pubs.append(pub)            
+            self.pubs.append(pub)   
 
+            # marker_pub =  rospy.Publisher('/robot_{}/marker'.format(i), MarkerArray, queue_size=1)  
+
+        self.marker_array_publisher = rospy.Publisher('boids_marker_array', MarkerArray)
+        self.goal_marker_publisher  = rospy.Publisher('goal_marker', Marker)
+        self.subgoal_marker_pub = rospy.Publisher('subgoal_marker_array', MarkerArray)
+        self.leading_boid_ids = []
+        self.all_goals = None
         # subscribe to map
         self.map_subscriber = rospy.Subscriber("/map", OccupancyGrid, self.map_cb)
-
-        # execute algorithm 
+        # execute algor
         rospy.Timer(rospy.Duration(0.1), self.run)
 
-        # tests
-        # rospy.Timer(rospy.Duration(1.0), self._test_odom)
+        
+        #design choice for goal publishing
+        #1. create a marker for each boid, and let the publisher receive an extra argument that determines what the color of each boid will be
+        # 2. Have two list of colors. If a boid is a leader, attach it id to a list 
+        # 3. Send this list to the publisher at the time of publishing
+        # 4. Before setting the color of the marker for each boid, check if the boid is a member of that list
+        # 5. If it is in the list, then give it the color of a leader, else, give it the color of a follower.   
+
+        #design choice for multigoal case
+
+    def set_goals(self, all_goals):
+        self.all_goals = all_goals
+        
+
+    def publish_goal_marker(self, goal):
+        marker = Marker()
+        marker.header.frame_id = "map"  # Replace with your frame ID
+        marker.type = Marker.SPHERE
+        marker.id = 10000
+        marker.header.stamp = rospy.Time.now()
+        marker.pose.position.x = goal[0]
+        marker.pose.position.y = goal[1]
+        marker.pose.position.z = 0
+        marker.scale.x = 2*self.percep_field[0]*self.inter_goal_dist  # Adjust size as needed
+        marker.scale.y = 2*self.percep_field[0]*self.inter_goal_dist
+        marker.scale.z = 0
+        marker.lifetime = rospy.Duration(8937393)
+        marker.color = ColorRGBA(0.0, 1.0, 0.0, 0.5)
+        self.goal_marker_publisher.publish(marker)
+        pass
+
+    def publish_subgoals(self, subgoals):
+        if subgoals != None:
+            marker_array = MarkerArray()
+            for i in range(len(subgoals)):
+                marker = Marker()
+                marker.header.frame_id = "map"  # Replace with your frame ID
+                marker.type = Marker.SPHERE
+                marker.id = i
+                marker.header.stamp = rospy.Time.now()
+                marker.pose.position.x = subgoals[i][0]
+                marker.pose.position.y = subgoals[i][1]
+                marker.pose.position.z = 0
+                marker.scale.x = 0.08  # Adjust size as needed
+                marker.scale.y = 0.08
+                marker.scale.z = 0.0
+                marker.lifetime = rospy.Duration(57437204)
+                marker.color = ColorRGBA(1.0, 1.0, 1.0, 1.0)
+                marker_array.markers.append(marker)
+            self.subgoal_marker_pub.publish(marker_array)
+        pass
+
+    def publish_formation(self):
+        """this function publishes the pose at which the scan was taken as a marker
+
+        :param xk_cloned: the pose at which the scan was taken
+        :type xk_cloned: 2D numpy array
+
+        :return: None
+        :rtype: None
+        """
+        marker_array = MarkerArray()
+        for boid in self.boids:
+            position = boid.get_pose()
+            marker = Marker()
+            marker.header.frame_id = "map"  # Replace with your frame ID
+            marker.type = Marker.SPHERE
+            marker.id = boid.id
+            marker.header.stamp = rospy.Time.now()
+            marker.pose.position.x = position[0]
+            marker.pose.position.y = position[1]
+            marker.pose.position.z = 0
+            marker.scale.x = 0.1  # Adjust size as needed
+            marker.scale.y = 0.1
+            marker.scale.z = 0.1
+            marker.lifetime = rospy.Duration(0.1)
+            if self.n_leaders > 0 and len(self.leading_boid_ids) != 0:
+                marker.color = ColorRGBA(1.0, 1.0, 0.0, 1.0) if boid.id in self.leading_boid_ids else ColorRGBA(1.0, 0.0, 0.0, 1.0)
+            else:
+                marker.color = ColorRGBA(0.0, 1.0, 0.0, 1.0) 
+            #convert the yaw angle to a euler to quaternion
+            quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, position[2])
+            marker.pose.orientation.x = quaternion[0]
+            marker.pose.orientation.y = quaternion[1]
+            marker.pose.orientation.z = quaternion[2]
+            marker.pose.orientation.w = quaternion[3]
+            marker_array.markers.append(marker)
+        self.marker_array_publisher.publish(marker_array)
+        self.leading_boid_ids = []
+        pass
 
     def odom_callback(self, data, robot_id):
         '''
@@ -159,6 +256,9 @@ class Reynolds:
         for i in range(self.n_leaders - 1):
             goals.append([*self.point_angle_length(self.goal[:2], angle, self.percep_field[0] * self.inter_goal_dist), self.goal[2], self.goal[3]])
             angle += np.pi / 3
+        
+        #save all the generated goals
+        self.set_goals(goals)
 
         # Find the closest boid to each goal
         for goal in goals:
@@ -168,6 +268,9 @@ class Reynolds:
             if self.leader_type == 0:
                 closest_boids = np.delete(closest_boids, np.argmin(distances))
             self.boids[closest_boid].set_goal(goal)
+            
+            #NOTE: JOSEPH: Added the following line
+            self.leading_boid_ids.append(closest_boid)
 
         # Plot the goals assigned to each boid
         for boid in self.boids:
@@ -281,12 +384,24 @@ class Reynolds:
 
             #publish the cmd velocity to the appropriate boids topic
             self.publish_cmd_vel(b, cmd_vel)
+            #publish the goal
+            self.publish_goal_marker(self.goal)
+            #publish the subgoals
+            self.publish_subgoals(self.all_goals)
+            #publish the formation
+            if self.boids_created:
+                self.publish_formation()
         
 
     def _test_odom(self,event):
         print('-------------------------')
         for b in self.boids:
             print(f"Boid {b.id} is at loc: {b.get_pos()} with velocty: {b.get_linvel()}")
+
+
+
+
+#TODO: Subscribe to the odometry message of each boid and remap as a markerArray.
 
 
 if __name__ == '__main__':

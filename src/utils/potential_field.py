@@ -1,8 +1,8 @@
 import numpy as np
 import math
 import rospy
-from ompl import base as ob
-from ompl import geometric as og
+# from ompl import base as ob
+# from ompl import geometric as og
 import matplotlib.pyplot as plt
 import copy
 import matplotlib.patches as patches
