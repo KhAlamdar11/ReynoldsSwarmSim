@@ -21,6 +21,9 @@ from utils.steer_to_avoid import SteerToAvoid
 from utils.navigation import Navigate
 
 
+
+
+
 class Reynolds:
     def __init__(self):
         # Initialize different components of the class
@@ -46,6 +49,9 @@ class Reynolds:
                      rospy.get_param('~goal_radius'),
                      rospy.get_param('~goal_tolerance')]
         self.goal_list = rospy.get_param('~goal_list')
+
+        #print the goal list to know what type of list it is
+        print(f"Goal list: {self.goal_list}")   
         self.max_speed = rospy.get_param('~max_speed')
         self.max_acc = rospy.get_param('~max_acc')
         self.n_leaders = min(rospy.get_param('~n_leaders'), self.n_boids)
@@ -58,6 +64,12 @@ class Reynolds:
         self.avoid_obstacles = SteerToAvoid(self.obs_r, self.step_angle, self.max_steering_angle)
         self.all_goals = []  # Initialize all_goals, adjust as per your logic
         self.leading_boid_ids = []
+
+
+        #NOTE: JOSEPH: Added the following line to make the goal a list of lists
+        self.use_multigoal = rospy.get_param('~use_multigoal')
+        self.current_goal_index = 0 # to store the index of the current goal in the goal list
+        self.arrival_threshold = rospy.get_param('~arrival_threshold') # the percentage of boids that should be within the goal radius for the goal to be considered reached
 
     def initialize_ros_components(self):
         # Initialize ROS subscribers and publishers
@@ -121,6 +133,37 @@ class Reynolds:
     def set_goals(self, all_goals):
         self.all_goals = all_goals
         
+    #define a function that checks if at least 80% of the boids are within the goal radius
+    def is_goal_reached(self):
+        #get the positions of all the boids
+        positions = np.array([boid.get_pos() for boid in self.boids])
+        #find the distance between each boid and the goal
+        distances = np.linalg.norm(positions - self.goal[:2], axis=1)
+        #count the number of boids within the goal radius
+        num_boids_in_goal = np.sum(distances <= (self.percep_field[0]*self.inter_goal_dist + self.goal[3])) 
+        #check if at least 80% of the boids are within the goal radius
+        if num_boids_in_goal >= self.arrival_threshold*self.n_boids:
+            return True
+        else:
+            return False
+        
+    #define a function that does what the previous 8 lines of code do but also generates new goals once the previous goals have been reached
+    def assign_goal(self, goal):
+        if self.leader_method == 0:
+            self.generate_goals(goal)
+        elif self.leader_method == 1:
+            self.convex_hull(goal)
+        if self.leader_type == 1:
+            self.compute_goals = False # IF THIS IS FALSE, THE LEADERS WILL BE FIXED
+        pass
+
+
+    def update_goal(self):
+        self.current_goal_index += 1
+        if self.current_goal_index < len(self.goal_list):
+            self.assign_goal(self.goal_list[self.current_goal_index])
+        pass
+
 
     def publish_goal_marker(self, goal):
         marker = Marker()
@@ -234,33 +277,33 @@ class Reynolds:
         y2 = p1[1] + np.sin(angle) * length
         return [x2, y2]
 
-    def generate_goals(self):
+    def generate_goals(self, goal=None):
         positions = np.array([boid.get_pos() for boid in self.boids])
 
         # Find the boids closest to the goal
-        distances = np.linalg.norm(positions - self.goal[:2], axis=1)
+        distances = np.linalg.norm(positions - goal[:2], axis=1)
         closest_boids = np.argsort(distances)[:self.n_leaders]
 
         # # Create the goals using point angle length. Each angle is 60 degrees from the previous angle.
         # # The length is the boid's local radius.
-        goals = [self.goal]
+        goals = [goal]
         # Convert 60 degrees to radians
         angle = np.pi / 3
         for i in range(self.n_leaders - 1):
-            goals.append([*self.point_angle_length(self.goal[:2], angle, self.percep_field[0] * self.inter_goal_dist), self.goal[2], self.goal[3]])
+            goals.append([*self.point_angle_length(goal[:2], angle, self.percep_field[0] * self.inter_goal_dist), goal[2], goal[3]])
             angle += np.pi / 3
         
         #save all the generated goals
         self.set_goals(goals)
 
         # Find the closest boid to each goal
-        for goal in goals:
-            distances = np.linalg.norm(positions[closest_boids] - goal[:2], axis=1)
+        for g in goals:
+            distances = np.linalg.norm(positions[closest_boids] - g[:2], axis=1)
             closest_boid = closest_boids[np.argmin(distances)]
             # Delete the boid from the closest boids so that it is not assigned to another goal
             if self.leader_type == 0:
                 closest_boids = np.delete(closest_boids, np.argmin(distances))
-            self.boids[closest_boid].set_goal(goal)
+            self.boids[closest_boid].set_goal(g)
             
             #NOTE: JOSEPH: Added the following line
             self.leading_boid_ids.append(closest_boid)
@@ -274,7 +317,7 @@ class Reynolds:
             plt.plot(boid.get_goal()[0], boid.get_goal()[1], 'ro')
         # plt.show()
 
-    def convex_hull(self):
+    def convex_hull(self, goal=None):
         positions = np.array([boid.get_pos() for boid in self.boids])
 
         # Find the boids that are the 4 corners of the convex hull
@@ -294,11 +337,11 @@ class Reynolds:
 
         # Create the goals using point angle length. Each angle is 60 degrees from the previous angle.
         # The length is the boid's local radius.
-        goals = [self.goal]
+        goals = [goal]
         # Convert 60 degrees to radians
         angle = np.pi / 3
         for i in range(self.n_leaders - 1):
-            goals.append([*self.point_angle_length(self.goal[:2], angle, self.percep_field[0] * self.inter_goal_dist), self.goal[2], self.goal[3]])
+            goals.append([*self.point_angle_length(goal[:2], angle, self.percep_field[0] * self.inter_goal_dist), goal[2], goal[3]])
             angle += np.pi / 3
 
         # Find the closest boid to each goal
@@ -320,6 +363,7 @@ class Reynolds:
                 continue
             plt.plot(boid.get_goal()[0], boid.get_goal()[1], 'ro')
         # plt.show()
+
 
     def find_neighbors(self, boid):
         # Retrieve the position of each boid. 
@@ -357,19 +401,23 @@ class Reynolds:
                 continue
             if b.get_pos() == None:
                 continue
-
             # print(f"Boid {b.id} is at loc: {b.get_pos()} with velocty: {b.get_linvel()}")
             neighbors = self.find_neighbors(b)
             b.set_neighbors(neighbors)
+            # # Generate goals (if necessary) for leader boids. Single goal case
+            # if self.compute_goals and self.boids_created and not self.use_multigoal:
+            #     self.assign_goal(self.goal) #generate and assign the goals to the boids
 
-            # Generate goals (if necessary) for leader boids.
-            if self.compute_goals and self.boids_created:
-                if self.leader_method == 0:
-                    self.generate_goals()
-                elif self.leader_method == 1:
-                    self.convex_hull()
-                if self.leader_type == 1:
-                    self.compute_goals = False # IF THIS IS FALSE, THE LEADERS WILL BE FIXED
+            # #if the multigoal option is selected the boids would be assigned new goals from the goal list once the previous goals have been reached
+            # if self.compute_goals and self.boids_created and self.use_multigoal:
+            #     # Assign the first goal if no goal has been assigned yet
+            #     if self.current_goal_index == 0:
+            #         self.assign_goal(self.goal_list[0])
+            #     # Check if the current goal is reached
+            #     if self.is_goal_reached():
+            #         # Update the goal
+            #         self.update_goal()
+
             cmd_vel = b.update(self.boids)
 
             ## Test obstacle avoidance in isolation
@@ -377,13 +425,36 @@ class Reynolds:
 
             #publish the cmd velocity to the appropriate boids topic
             self.publish_cmd_vel(b, cmd_vel)
-            #publish the goal
-            self.publish_goal_marker(self.goal)
-            #publish the subgoals
-            self.publish_subgoals(self.all_goals)
-            #publish the formation
-            if self.boids_created:
-                self.publish_formation()
+            
+            # #publish the goal
+            # self.publish_goal_marker(self.goal)
+            # #publish the subgoals
+            # self.publish_subgoals(self.all_goals)
+            # #publish the formation
+            # if self.boids_created:
+            #     self.publish_formation()
+
+        #TODO: I see a possible bug because boids have started moving before the goals are generated.
+
+        # Generate goals (if necessary) for leader boids. Single goal case
+        if self.compute_goals and self.boids_created and not self.use_multigoal:
+            self.assign_goal(self.goal) #generate and assign the goals to the boids
+        #if the multigoal option is selected the boids would be assigned new goals from the goal list once the previous goals have been reached
+        if self.compute_goals and self.boids_created and self.use_multigoal:
+            # Assign the first goal if no goal has been assigned yet
+            if self.current_goal_index == 0:
+                self.assign_goal(self.goal_list[0])
+            # Check if the current goal is reached
+            if self.is_goal_reached():
+                # Update the goal
+                self.update_goal()
+        #publish the goal
+        self.publish_goal_marker(self.goal)
+        #publish the subgoals
+        self.publish_subgoals(self.all_goals)
+        #publish the formation
+        if self.boids_created:
+            self.publish_formation()
         
 
     def _test_odom(self,event):
