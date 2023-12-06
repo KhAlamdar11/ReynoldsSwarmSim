@@ -68,5 +68,13 @@ Parameters can be modified in the params.yaml file.
     - **Matplotlib**: The boids are visualized in a matplotlib window. This is useful for debugging and testing. See the `animation_test.py` script for an example.
     - **P5**: The boids are visualized in the P5 simulator. This is the actual simulation mode. See the `p5_test.py` script for an example. This script is a good starting point for testing your code. You can use it to test your code before integrating it with the ROS script.
 - You can use the 'separation_visualization.py' script to visualize the separation behaviour. 
+- Seek and Arrival behaviors have been implemented in the `Boid` class. 
+- Two methods have been implemented to compute the leaders of the flock. 
+    - The first method is based on the closest boids to the goal.
+    - The second method is based on the boids at the boudary of the flock.
+    - In both cases, sub-goals are computed for leaders to prevent collisions on arrival. 
+- Adjustments were made to the computations in the `Boid` class. All computations are done in NumPy arrays. This makes the code more readable and efficient.
+- Prioritized acceleration has been included in the `Boid` class. This is useful for implementing the Reynolds algorithm.
+- Most tunable parameters have been moved to the `params.yaml` file. 
 
 

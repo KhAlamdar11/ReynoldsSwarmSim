@@ -20,10 +20,18 @@ from utils.potential_field import PotentialField
 from utils.steer_to_avoid import SteerToAvoid
 from utils.navigation import Navigate
 
+
 class Reynolds:
     def __init__(self):
+        # Initialize different components of the class
+        self.initialize_parameters()
+        self.initialize_behaviors()
+        self.initialize_boids()
+        self.initialize_ros_components()
+        self.start_algorithm()
 
-        # Get parameters
+    def initialize_parameters(self):
+        # Extracting parameters from rospy
         self.n_boids = rospy.get_param('~n_boids')
         self.weights = [rospy.get_param('~w_a'),
                         rospy.get_param('~w_c'),
@@ -37,93 +45,78 @@ class Reynolds:
                      rospy.get_param('~goal_y'),
                      rospy.get_param('~goal_radius'),
                      rospy.get_param('~goal_tolerance')]
-
         self.goal_list = rospy.get_param('~goal_list')
-
         self.max_speed = rospy.get_param('~max_speed')
         self.max_acc = rospy.get_param('~max_acc')
-
-        # Ensure that n_leaders is less than or equal to n_boids
-        self.n_leaders = rospy.get_param('~n_leaders')
-        if self.n_leaders > self.n_boids:
-            self.n_leaders = self.n_boids
-            rospy.logwarn('n_leaders cannot be greater than n_boids. Setting n_leaders to n_boids.')
-
+        self.n_leaders = min(rospy.get_param('~n_leaders'), self.n_boids)
         self.leader_method = rospy.get_param('~leader_method')
         self.leader_type = rospy.get_param('~leader_type')
         self.inter_goal_dist = rospy.get_param('~inter_goal_dist')
         self.use_prioritized_acc = rospy.get_param('~use_prioritized_acc')
         self.priority_list = rospy.get_param('~priority_list')
         self.hard_arrival = rospy.get_param('~hard_arrival')
-
-        rospy.loginfo('n_boids: %s', self.n_boids)
-        rospy.loginfo('weights [w_a, w_c, w_s]: %s', self.weights)
-        rospy.loginfo('perceptive field [local_r, local_theta]: %s', self.percep_field)
-        rospy.loginfo('obstacle avoidance [obs_r, ang_inc, max steering]: %s', [self.obs_r,self.step_angle, self.max_steering_angle])
-
-        # list of poses [x,v] for bois in neigborhood. Robot id = list index
-        self.boids = [None for _ in range(self.n_boids)]
-
-        # create obstacle avoidance instance
-        # self.avoid_obstacles = PotentialField(self.obs_r)
-        self.avoid_obstacles = SteerToAvoid(self.obs_r,self.step_angle,self.max_steering_angle)
-
-        # Create a dictionary of all behaviors
-        self.all_behaviors = {'_separation': 'self', 
-                              '_cohesion': 'self', 
-                              '_alignment': 'self',
-                              '_steer_to_avoid': SteerToAvoid(self.obs_r,self.step_angle,self.max_steering_angle), 
-                              '_seek': Navigate(self.max_acc, self.max_speed),
-                              '_arrival': Navigate(self.max_acc, self.max_speed)
-                              }
-
-        # Create a list of behaviors to be used for dynamic function calls
-        self.behavior_list = []
-        for behavior in self.priority_list:
-            if list(behavior.keys())[0] in list(self.all_behaviors.keys()):
-                # Create class instances for each behavior
-                name = list(behavior.keys())[0]
-                weight = list(behavior.values())[0]
-                self.behavior_list.append({name: [weight, self.all_behaviors[name]]})
-
-        self.kwargs = {'max_speed': self.max_speed, 'use_prioritized_acc': self.use_prioritized_acc,
-                       'behavior_list': self.behavior_list, 'max_acc': self.max_acc, 'hard_arrival': self.hard_arrival}
-
-        self.compute_goals = True if self.n_leaders > 0 else False
-        self.boids_created = False
-
-        # Create subscribers and publishers to n robots dynamically
-        self.subs = []
-        self.pubs = []
-        for i in range(self.n_boids):
-
-            sub = rospy.Subscriber('/robot_{}/odom'.format(i), Odometry, self.odom_callback, callback_args=i)
-            self.subs.append(sub)
-
-            pub = rospy.Publisher('/robot_{}/cmd_vel'.format(i), Twist, queue_size=1)
-            self.pubs.append(pub)   
-
-            # marker_pub =  rospy.Publisher('/robot_{}/marker'.format(i), MarkerArray, queue_size=1)  
-
-        self.marker_array_publisher = rospy.Publisher('boids_marker_array', MarkerArray)
-        self.goal_marker_publisher  = rospy.Publisher('goal_marker', Marker)
-        self.subgoal_marker_pub = rospy.Publisher('subgoal_marker_array', MarkerArray)
+        self.avoid_obstacles = SteerToAvoid(self.obs_r, self.step_angle, self.max_steering_angle)
+        self.all_goals = []  # Initialize all_goals, adjust as per your logic
         self.leading_boid_ids = []
-        self.all_goals = None
-        # subscribe to map
+
+    def initialize_ros_components(self):
+        # Initialize ROS subscribers and publishers
+        self.subs = [rospy.Subscriber('/robot_{}/odom'.format(i), Odometry, self.odom_callback, callback_args=i)
+                     for i in range(self.n_boids)]
+        self.pubs = [rospy.Publisher('/robot_{}/cmd_vel'.format(i), Twist, queue_size=1)
+                     for i in range(self.n_boids)]
+        self.marker_array_publisher = rospy.Publisher('boids_marker_array', MarkerArray)
+        self.goal_marker_publisher = rospy.Publisher('goal_marker', Marker)
+        self.subgoal_marker_pub = rospy.Publisher('subgoal_marker_array', MarkerArray)
         self.map_subscriber = rospy.Subscriber("/map", OccupancyGrid, self.map_cb)
-        # execute algor
+
+    def initialize_behaviors(self):
+        # Initialize behaviors and behavior list
+        self.all_behaviors = self.create_behavior_dictionary()
+        self.behavior_list = self.create_behavior_list()
+
+    def create_behavior_dictionary(self):
+        # Create a dictionary of all behaviors
+        return {
+            '_separation': 'self', 
+            '_cohesion': 'self', 
+            '_alignment': 'self',
+            '_steer_to_avoid': self.avoid_obstacles, 
+            '_seek': Navigate(self.max_acc, self.max_speed),
+            '_arrival': Navigate(self.max_acc, self.max_speed)
+        }
+
+    def create_behavior_list(self):
+        # Create a list of behaviors for dynamic function calls
+        behavior_list = []
+        for behavior_dict in self.priority_list:
+            # Assuming behavior_dict is a dictionary with one key-value pair
+            behavior_name = list(behavior_dict.keys())[0]
+            if behavior_name in self.all_behaviors:
+                behavior_weight = behavior_dict[behavior_name]
+                behavior_list.append({behavior_name: [behavior_weight, self.all_behaviors[behavior_name]]})
+        return behavior_list
+
+    def initialize_kwargs(self):
+        # Initialize kwargs dictionary with relevant parameters
+        self.kwargs = {
+            'max_speed': self.max_speed, 
+            'use_prioritized_acc': self.use_prioritized_acc,
+            'behavior_list': self.behavior_list, 
+            'max_acc': self.max_acc, 
+            'hard_arrival': self.hard_arrival
+        }
+
+    def initialize_boids(self):
+        # Initialize boid related attributes
+        self.boids = [None for _ in range(self.n_boids)]
+        self.compute_goals = self.n_leaders > 0
+        self.boids_created = False
+        self.initialize_kwargs()  # Initialize the kwargs here
+
+    def start_algorithm(self):
+        # Start the algorithm with a ROS timer
         rospy.Timer(rospy.Duration(0.1), self.run)
-
-        
-        #design choice for goal publishing
-        #1. create a marker for each boid, and let the publisher receive an extra argument that determines what the color of each boid will be
-        # 2. Have two list of colors. If a boid is a leader, attach it id to a list 
-        # 3. Send this list to the publisher at the time of publishing
-        # 4. Before setting the color of the marker for each boid, check if the boid is a member of that list
-        # 5. If it is in the list, then give it the color of a leader, else, give it the color of a follower.   
-
-        #design choice for multigoal case
 
     def set_goals(self, all_goals):
         self.all_goals = all_goals
