@@ -1,3 +1,6 @@
+# visualize via rviz
+visualize: True
+
 # number of boids
 n_boids: 7
 
@@ -29,7 +32,7 @@ max_speed: 3.3
 max_acc: 2.2
 
 # Number of leader
-n_leaders: 7 # Should not be greater than 7
+n_leaders: 3 # Should not be greater than 7
 leader_method: 0 # 0: Closest to goal, 1: ConvexHull
 leader_type: 0 # 0: Dynamic, 1: Fixed
 

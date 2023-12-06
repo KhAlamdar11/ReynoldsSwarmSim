@@ -5,6 +5,9 @@ from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
+from std_msgs.msg import Header, ColorRGBA
+from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
+from visualization_msgs.msg import Marker, MarkerArray
 
 import math
 import numpy as np
@@ -20,7 +23,8 @@ from utils.navigation import Navigate
 class Reynolds:
     def __init__(self):
 
-        # Get parameters
+        # ____________________________  Get/Set Params  ____________________________
+
         self.n_boids = rospy.get_param('~n_boids')
         self.weights = [rospy.get_param('~w_a'),
                         rospy.get_param('~w_c'),
@@ -58,6 +62,8 @@ class Reynolds:
         rospy.loginfo('perceptive field [local_r, local_theta]: %s', self.percep_field)
         rospy.loginfo('obstacle avoidance [obs_r, ang_inc, max steering]: %s', [self.obs_r,self.step_angle, self.max_steering_angle])
 
+        # ____________________________  Instantiate Boids & Obstacle Avoidance  ____________________________
+
         # list of poses [x,v] for bois in neigborhood. Robot id = list index
         self.boids = [None for _ in range(self.n_boids)]
 
@@ -89,6 +95,8 @@ class Reynolds:
         self.compute_goals = True if self.n_leaders > 0 else False
         self.boids_created = False
 
+        # ____________________________ Subs/Pubs  ____________________________
+
         # Create subscribers and publishers to n robots dynamically
         self.subs = []
         self.pubs = []
@@ -103,11 +111,27 @@ class Reynolds:
         # subscribe to map
         self.map_subscriber = rospy.Subscriber("/map", OccupancyGrid, self.map_cb)
 
-        # execute algorithm 
+        # ____________________________  main execution  ____________________________ 
         rospy.Timer(rospy.Duration(0.1), self.run)
 
-        # tests
+        #____________________________   visualize   ____________________________
+
+        self.map_msg = None
+        self.map_dilated = False
+
+        self.boids_markers_pub = rospy.Publisher("/vis/boid_positions", MarkerArray,queue_size=1) 
+        self.dilated_obs_pub = rospy.Publisher("/vis/obstacle_dilated", OccupancyGrid, queue_size=1)
+        self.goal_pub = rospy.Publisher("/vis/goal", Marker, queue_size=1)
+        
+        self.boids_markers = MarkerArray()
+        self.boids_markers.markers = []
+
+        if rospy.get_param('~visualize'):
+            rospy.Timer(rospy.Duration(0.05), self._visualize) # 20fps
+        
+        #____________________________  tests  ____________________________
         # rospy.Timer(rospy.Duration(1.0), self._test_odom)
+        
 
     def odom_callback(self, data, robot_id):
         '''
@@ -133,10 +157,8 @@ class Reynolds:
         self.all_behaviors['_steer_to_avoid'].set(data=env, 
                                 resolution=gridmap.info.resolution, 
                                 origin=[gridmap.info.origin.position.x, gridmap.info.origin.position.y])
-        # self.avoid_obstacles.set(data=env, 
-        #                         resolution=gridmap.info.resolution, 
-        #                         origin=[gridmap.info.origin.position.x, gridmap.info.origin.position.y])
-
+        self.map_msg = gridmap         
+            
     @classmethod
     def point_angle_length(cls, p1=[], angle=0, length=1):
         # A segment can be initialized with a Point object, an angle, and a segment length.
@@ -282,6 +304,69 @@ class Reynolds:
             #publish the cmd velocity to the appropriate boids topic
             self.publish_cmd_vel(b, cmd_vel)
         
+    def _visualize(self, event):
+        self.boids_markers.markers = []
+
+        # Extra pos and leader data from boids
+        pos_list, leader_list = [], []
+        for b in self.boids:
+            pos_list.append(b.get_pos())
+            leader_list.append(0 if b.get_goal() is None else 1)
+        
+        for i in range(self.n_boids):
+
+            # create boid markers
+            marker = Marker(
+                header=Header(frame_id="map"),
+                type=Marker.SPHERE,
+                action=Marker.ADD,
+                pose=Pose(Point(*pos_list[i], 0), Quaternion(0, 0, 0, 1)),
+                # red for leader, blue for normal
+                color=ColorRGBA(leader_list[i], 0, 1-leader_list[i], 1),
+                scale=Vector3(0.1, 0.1, 0.1),
+                lifetime=rospy.Duration(0),
+            )
+            marker.id = i
+            self.boids_markers.markers.append(marker)
+
+            # create local neighbordhoods
+            marker = Marker(
+                header=Header(frame_id="map"),
+                type=Marker.CYLINDER,
+                action=Marker.ADD,
+                pose=Pose(Point(*pos_list[i], 0), Quaternion(0, 0, 0, 1)),
+                # red for leader, blue for normal
+                color=ColorRGBA(0, 1, 0, 0.15),
+                scale=Vector3(self.percep_field[0], self.percep_field[0], 0.05),
+                lifetime=rospy.Duration(0),
+            )
+            marker.id = i + self.n_boids
+            self.boids_markers.markers.append(marker)
+        self.boids_markers_pub.publish(self.boids_markers)
+
+        # publish goal 
+        marker = Marker(
+                header=Header(frame_id="map"),
+                type=Marker.CYLINDER,
+                action=Marker.ADD,
+                pose=Pose(Point(*[self.goal[0], self.goal[1]], 0), Quaternion(0, 0, 0, 1)),
+                # red for leader, blue for normal
+                color=ColorRGBA(1, 1, 0, 0.4),
+                scale=Vector3(self.goal[-2], self.goal[-2], 0.3),
+                lifetime=rospy.Duration(0),
+            )
+        self.goal_pub.publish(marker)
+
+        # Publish dilated map
+        if not(self.map_dilated):
+            grid_map = np.array(self.map_msg.data).reshape(self.map_msg.info.height, self.map_msg.info.width)
+            dilated_obs = self.all_behaviors['_steer_to_avoid'].dilate_obstacles(grid_map, 
+                                    dilation_length = round(self.obs_r/self.map_msg.info.resolution))
+            dilation = (dilated_obs - grid_map)*0.5
+            self.map_msg.data = dilation.flatten().astype(int).tolist()
+            self.map_dilated = True 
+        self.dilated_obs_pub.publish(self.map_msg)
+
 
     def _test_odom(self,event):
         print('-------------------------')

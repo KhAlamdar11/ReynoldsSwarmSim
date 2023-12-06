@@ -56,6 +56,16 @@ class SteerToAvoid:
         dilated_grid[dilated_mask] = 100  # Set occupied cells to 100 in the dilated grid
         return dilated_grid
     
+    def dilate_obstacles(self,grid, dilation_length):
+        obstacle_mask = (grid == 100)
+        structuring_element = np.array([[1, 1, 1],
+                                        [1, 1, 1],
+                                        [1, 1, 1]], dtype=bool)
+        dilated_mask = morphology.binary_dilation(obstacle_mask, iterations=dilation_length, structure=structuring_element)
+        dilated_grid = np.zeros_like(grid)
+        dilated_grid[dilated_mask] = 100  # Set occupied cells to 100 in the dilated grid
+        return dilated_grid
+    
     #----------------------------------------------------------------behavior core functions----------------------------#
 
     def is_valid(self, point):

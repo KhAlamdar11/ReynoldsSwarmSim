@@ -7,4 +7,6 @@
         <rosparam file="$(find mrs-r1)/params.yaml"/>
     </node>
 
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mrs-r1)/rviz/vis.rviz"/>
+
 </launch>

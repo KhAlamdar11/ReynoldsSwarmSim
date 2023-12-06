@@ -25,7 +25,7 @@ class Navigate:
             target_offset = np.array(boid_goal[:2]) - np.array(boid_pose[:2])   # goal[x, y], not r or tolerance. 
             distance = np.linalg.norm(target_offset)
             if distance < boid_goal[3]:
-                print("Distance: ", distance)
+                # print("Distance: ", distance)
                 #TODO: send a flag that boid_goal has been reached and generate a new boid_goal
                 
                 return np.array([0., 0.]) # Set the distance to 0 when it falls below the tolerance. 
