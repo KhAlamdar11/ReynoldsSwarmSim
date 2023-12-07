@@ -1,5 +1,9 @@
+# visualization params
+visualize: True
+truncate_trajectories: 100  # None if displaying full trajectories
+
 # number of boids
-n_boids: 7
+n_boids: 13
 
 # behavior weights
 w_a: &w_a 0.0 # Reusable anchor**

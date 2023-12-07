@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 class Navigate:
@@ -25,7 +26,7 @@ class Navigate:
             target_offset = np.array(boid_goal[:2]) - np.array(boid_pose[:2])   # goal[x, y], not r or tolerance. 
             distance = np.linalg.norm(target_offset)
             if distance < boid_goal[3]:
-                print("Distance: ", distance)
+                # print("Distance: ", distance)
                 #TODO: send a flag that boid_goal has been reached and generate a new boid_goal
                 
                 return np.array([0., 0.]) # Set the distance to 0 when it falls below the tolerance. 
@@ -33,4 +34,6 @@ class Navigate:
             ramped_speed = self.max_speed * (distance / boid_goal[2])
             clipped_speed = np.minimum(ramped_speed, self.max_speed)
             desired_velocity = (clipped_speed / distance) * target_offset
+            # Sample the desired velocity from the velocity space using probability
+            # desired_velocity = np.array([random.uniform(-self.max_speed, self.max_speed), random.uniform(-self.max_speed, self.max_speed)]) if random.uniform(0, 1) < 0.5 else desired_velocity
         return desired_velocity

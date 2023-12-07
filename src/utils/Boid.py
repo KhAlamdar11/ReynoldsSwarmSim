@@ -149,7 +149,7 @@ class Boid:
 
         # Save trajectory
         # self.poses_list = np.vstack((self.poses_list, self.get_pos_n_velocity_direction()))
-        # np.savetxt('/home/alamdar11/Desktop/path_line10x10_potfield.npy', self.poses_list)
+        # np.savetxt('/home/alamdar11/Desktop/path_simple_maze_10x10_SteerToAvoid_wall.npy', self.poses_list)
 
         return cmd_vel
 
