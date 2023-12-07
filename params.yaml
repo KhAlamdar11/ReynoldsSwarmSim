@@ -1,8 +1,9 @@
-# visualize via rviz
+# visualization params
 visualize: True
+truncate_trajectories: 100  # None if displaying full trajectories
 
 # number of boids
-n_boids: 7
+n_boids: 13
 
 # behavior weights
 w_a: &w_a 0.0 # Reusable anchor**
@@ -32,7 +33,7 @@ max_speed: 3.3
 max_acc: 2.2
 
 # Number of leader
-n_leaders: 3 # Should not be greater than 7
+n_leaders: 7 # Should not be greater than 7
 leader_method: 0 # 0: Closest to goal, 1: ConvexHull
 leader_type: 0 # 0: Dynamic, 1: Fixed
 

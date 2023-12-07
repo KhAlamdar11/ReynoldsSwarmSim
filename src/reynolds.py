@@ -1,12 +1,11 @@
 #!/usr/bin/python3
 
 import rospy
-from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import OccupancyGrid
+from nav_msgs.msg import OccupancyGrid, Path
 from std_msgs.msg import Header, ColorRGBA
-from geometry_msgs.msg import Pose, Point, Quaternion, Vector3
+from geometry_msgs.msg import Pose, Point, Quaternion, Vector3, PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
 
 import math
@@ -116,17 +115,29 @@ class Reynolds:
 
         #____________________________   visualize   ____________________________
 
-        self.map_msg = None
-        self.map_dilated = False
-
-        self.boids_markers_pub = rospy.Publisher("/vis/boid_positions", MarkerArray,queue_size=1) 
-        self.dilated_obs_pub = rospy.Publisher("/vis/obstacle_dilated", OccupancyGrid, queue_size=1)
-        self.goal_pub = rospy.Publisher("/vis/goal", Marker, queue_size=1)
-        
-        self.boids_markers = MarkerArray()
-        self.boids_markers.markers = []
-
         if rospy.get_param('~visualize'):
+
+            self.truncate_trajectories = rospy.get_param('~truncate_trajectories')
+
+            self.map_msg = None
+            self.map_dilated = False
+
+            self.trajectory_pubs = {}
+
+            self.boids_markers = MarkerArray()
+            self.boids_markers.markers = []
+            self.robot_trajectories = {}
+            # self.robot_trajectories = dict((i, Path(poses=[])) for i in range(self.n_boids))
+            for i in range(self.n_boids):
+                self.robot_trajectories[i] = Path(poses=[])
+
+            self.boids_markers_pub = rospy.Publisher("/vis/boid_positions", MarkerArray,queue_size=1) 
+            self.dilated_obs_pub = rospy.Publisher("/vis/obstacle_dilated", OccupancyGrid, queue_size=1)
+            self.goal_pub = rospy.Publisher("/vis/goal", Marker, queue_size=1)
+            
+            for robot_id in range(self.n_boids):
+                self.trajectory_pubs[robot_id] = rospy.Publisher(f"/vis/robot_{robot_id}/trajectory", Path, queue_size=1)
+
             rospy.Timer(rospy.Duration(0.05), self._visualize) # 20fps
         
         #____________________________  tests  ____________________________
@@ -315,7 +326,7 @@ class Reynolds:
         
         for i in range(self.n_boids):
 
-            # create boid markers
+            #___________________  create boid markers  ___________________
             marker = Marker(
                 header=Header(frame_id="map"),
                 type=Marker.SPHERE,
@@ -329,7 +340,7 @@ class Reynolds:
             marker.id = i
             self.boids_markers.markers.append(marker)
 
-            # create local neighbordhoods
+            #___________________  create local neighbordhoods  ___________________
             marker = Marker(
                 header=Header(frame_id="map"),
                 type=Marker.CYLINDER,
@@ -344,7 +355,7 @@ class Reynolds:
             self.boids_markers.markers.append(marker)
         self.boids_markers_pub.publish(self.boids_markers)
 
-        # publish goal 
+        #___________________   publish goal  ___________________
         marker = Marker(
                 header=Header(frame_id="map"),
                 type=Marker.CYLINDER,
@@ -352,12 +363,12 @@ class Reynolds:
                 pose=Pose(Point(*[self.goal[0], self.goal[1]], 0), Quaternion(0, 0, 0, 1)),
                 # red for leader, blue for normal
                 color=ColorRGBA(1, 1, 0, 0.4),
-                scale=Vector3(self.goal[-2], self.goal[-2], 0.3),
+                scale=Vector3(self.goal[-2], self.goal[-2], 0.1),
                 lifetime=rospy.Duration(0),
             )
         self.goal_pub.publish(marker)
 
-        # Publish dilated map
+        #___________________  Publish dilated map  ___________________
         if not(self.map_dilated):
             grid_map = np.array(self.map_msg.data).reshape(self.map_msg.info.height, self.map_msg.info.width)
             dilated_obs = self.all_behaviors['_steer_to_avoid'].dilate_obstacles(grid_map, 
@@ -368,6 +379,30 @@ class Reynolds:
         self.dilated_obs_pub.publish(self.map_msg)
 
 
+        #___________________  Publish Trajectories  ___________________
+        def update_trajectory(pos_list, robot_id,m=100):
+            # Create a new pose stamped with the current position
+            pose_stamped = PoseStamped()
+            pose_stamped.header.stamp = rospy.Time.now()
+            pose_stamped.header.frame_id = "map"
+            pose_stamped.pose.position = Point(*pos_list[robot_id], 0.0)
+
+            # Update the trajectory for the specified robot
+            if robot_id not in self.robot_trajectories:
+                self.robot_trajectories[robot_id] = Path()
+            self.robot_trajectories[robot_id].poses.append(pose_stamped)
+
+            traj_to_keep = self.truncate_trajectories
+            if len(self.robot_trajectories[robot_id].poses) > traj_to_keep:
+                self.robot_trajectories[robot_id].poses = self.robot_trajectories[robot_id].poses[-traj_to_keep:]
+
+            self.robot_trajectories[robot_id].header.frame_id = "map"
+
+            self.trajectory_pubs[robot_id].publish(self.robot_trajectories[robot_id])
+
+        [update_trajectory(pos_list, i) for i in range(self.n_boids)]
+
+        
     def _test_odom(self,event):
         print('-------------------------')
         for b in self.boids:
