@@ -320,6 +320,11 @@ class Reynolds:
 
         # Extra pos and leader data from boids
         pos_list, leader_list = [], []
+
+        # Ensure that all boids have been created and have a position and velocity before running the algorithm
+        if not(self.boids_created):
+            return
+
         for b in self.boids:
             pos_list.append(b.get_pos())
             leader_list.append(0 if b.get_goal() is None else 1)

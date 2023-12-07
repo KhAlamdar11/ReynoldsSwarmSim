@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 
 class Navigate:
@@ -33,4 +34,6 @@ class Navigate:
             ramped_speed = self.max_speed * (distance / boid_goal[2])
             clipped_speed = np.minimum(ramped_speed, self.max_speed)
             desired_velocity = (clipped_speed / distance) * target_offset
+            # Sample the desired velocity from the velocity space using probability
+            # desired_velocity = np.array([random.uniform(-self.max_speed, self.max_speed), random.uniform(-self.max_speed, self.max_speed)]) if random.uniform(0, 1) < 0.5 else desired_velocity
         return desired_velocity
