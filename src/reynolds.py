@@ -600,38 +600,13 @@ class Reynolds:
             # print(f"Boid {b.id} is at loc: {b.get_pos()} with velocty: {b.get_linvel()}")
             neighbors = self.find_neighbors(b)
             b.set_neighbors(neighbors)
-            # # Generate goals (if necessary) for leader boids. Single goal case
-            # if self.compute_goals and self.boids_created and not self.use_multigoal:
-            #     self.assign_goal(self.goal) #generate and assign the goals to the boids
-
-            # #if the multigoal option is selected the boids would be assigned new goals from the goal list once the previous goals have been reached
-            # if self.compute_goals and self.boids_created and self.use_multigoal:
-            #     # Assign the first goal if no goal has been assigned yet
-            #     if self.current_goal_index == 0:
-            #         self.assign_goal(self.goal_list[0])
-            #     # Check if the current goal is reached
-            #     if self.is_goal_reached():
-            #         # Update the goal
-            #         self.update_goal()
-
             cmd_vel = b.update(self.boids)
-
             ## Test obstacle avoidance in isolation
             # cmd_vel = b.test_obstacle_avoidance(self.avoid_obstacles)
-
             #publish the cmd velocity to the appropriate boids topic
             self.publish_cmd_vel(b, cmd_vel)
-            
-            # #publish the goal
-            # self.publish_goal_marker(self.goal)
-            # #publish the subgoals
-            # self.publish_subgoals(self.all_goals)
-            # #publish the formation
-            # if self.boids_created:
-            #     self.publish_formation()
-
-        #TODO: I see a possible bug because boids have started moving before the goals are generated.
-
+        
+        #NOTE: I see a possible bug because boids have started moving before the goals are generated, but its not a problem for now.
         # Generate goals (if necessary) for leader boids. Single goal case
         if self.compute_goals and self.boids_created and not self.use_multigoal:
             self.assign_goal(self.goal) #generate and assign the goals to the boids
@@ -647,6 +622,7 @@ class Reynolds:
                     boid.set_goal(None)
                 # Update the goal
                 self.update_goal()
+                
         #publish the goal
         # self.publish_goal_marker(self.goal)
         #publish the subgoals

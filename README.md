@@ -1,5 +1,11 @@
 ﻿# MRS Part 1 - Reynold's Rule
 
+
+## recent changes made by Joseph:
+- Created a unified launch file for launching stage simulator and the ros-node in ```parts1.launch```
+- Visualization of trajectory in Rviz implemented in ```reynolds.py```
+- Multigoal aggregation implemented in ```reynolds.py```
+
 ## recent changes made by nada :
 - state_tf - the transform function file 
 - boid2 - Boid_testing_visualization
@@ -76,5 +82,6 @@ Parameters can be modified in the params.yaml file.
 - Adjustments were made to the computations in the `Boid` class. All computations are done in NumPy arrays. This makes the code more readable and efficient.
 - Prioritized acceleration has been included in the `Boid` class. This is useful for implementing the Reynolds algorithm.
 - Most tunable parameters have been moved to the `params.yaml` file. 
+
 
 
