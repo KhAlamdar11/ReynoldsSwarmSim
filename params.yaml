@@ -1,12 +1,35 @@
+# visualization params
+visualize: True
+truncate_trajectories: 10000000  # None if displaying full trajectories
+
 # number of boids
 n_boids: 10
 
+
+# FOR 15 MEMBERS
 # behavior weights
-w_a: &w_a 0.4 # Reusable anchor**
-w_c: &w_c 0.7
+# w_a: &w_a 0.5 # Reusable anchor**
+# w_c: &w_c 2.9
+# w_s: &w_s 0.6
+# w_arrival: &w_arrival 0.1
+# w_steer_to_avoid: &w_steer_to_avoid 0.85
+
+
+# FOR 10 MEMBERS
+# # behavior weights
+w_a: &w_a 0.5 # Reusable anchor**
+w_c: &w_c 3.9
 w_s: &w_s 0.6
 w_arrival: &w_arrival 0.1
 w_steer_to_avoid: &w_steer_to_avoid 0.85
+
+
+# w_a: &w_a 0.4 # Reusable anchor**
+# w_c: &w_c 1.7
+# w_s: &w_s 0.6
+# w_arrival: &w_arrival 0.1
+# w_steer_to_avoid: &w_steer_to_avoid 0.85
+
 
 # neighborhood params
 local_r: 1.9
@@ -17,23 +40,24 @@ goal_x: 3 # 0
 goal_y: 3 # 3.7
 goal_radius: 0.5
 goal_tolerance: 0.02
-inter_goal_dist: 0.3 # Ratio of distance between two goals
+inter_goal_dist: 0.4 # Ratio of distance between two goals
 
 # Set multiple goals as a list of [x, y, radius, tolerance]
-use_multigoal: False
-arrival_threshold: 0.1
+use_multigoal: True
+arrival_threshold: 0.9
 goal_list: 
   - [3.0, 2.0, 0.5, 0.02]
-  - [0.0, 3.0, 0.5, 0.02]
-  - [3.0, 0.0, 0.5, 0.02]
-
+  - [-3.0, -4.0, 0.5, 0.02]
+  - [4.0, -4.0, 0.5, 0.02]
+  - [3.0, 4.0, 0.5, 0.02]
+  - [-3.0, 4.0, 0.5, 0.02]
 
 # Kinematic params
-max_speed: 14.3
-max_acc: 8.2
+max_speed: 12 #10.3
+max_acc: 2.5
 
 # Number of leader
-n_leaders: 4 # Should not be greater than 7
+n_leaders: 2 # Should not be greater than 7
 leader_method: 0 # 0: Closest to goal, 1: ConvexHull
 leader_type: 0 # 0: Dynamic, 1: Fixed
 
@@ -45,8 +69,8 @@ priority_list:
   # - '_steer_to_avoid': *w_steer_to_avoid
   # - '_potential_field': *w_steer_to_avoid
   - '_separation': *w_s
-  - '_alignment': *w_a
   - '_cohesion': *w_c
+  - '_alignment': *w_a
 
 # obstacle params
 obs_r:  0.8 # for both see-to-avoid and pot field

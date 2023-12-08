@@ -6,7 +6,9 @@ from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid
 from visualization_msgs.msg import Marker, MarkerArray
-from std_msgs.msg import ColorRGBA
+from std_msgs.msg import ColorRGBA, Header  
+from nav_msgs.msg import Path
+from geometry_msgs.msg import Pose, Point, Quaternion, Vector3, PoseStamped, Pose
 
 import math
 import numpy as np
@@ -22,8 +24,6 @@ from utils.navigation import Navigate
 
 
 
-
-
 class Reynolds:
     def __init__(self):
         # Initialize different components of the class
@@ -32,6 +32,7 @@ class Reynolds:
         self.initialize_boids()
         self.initialize_ros_components()
         self.start_algorithm()
+        self.start_visualization()
 
     def initialize_parameters(self):
         # Extracting parameters from rospy
@@ -77,10 +78,39 @@ class Reynolds:
                      for i in range(self.n_boids)]
         self.pubs = [rospy.Publisher('/robot_{}/cmd_vel'.format(i), Twist, queue_size=1)
                      for i in range(self.n_boids)]
-        self.marker_array_publisher = rospy.Publisher('boids_marker_array', MarkerArray)
-        self.goal_marker_publisher = rospy.Publisher('goal_marker', Marker)
-        self.subgoal_marker_pub = rospy.Publisher('subgoal_marker_array', MarkerArray)
+        
+        #define path publisher to publish the trajectory of each boid
+        self.path_pub = [rospy.Publisher('/robot_{}/path'.format(i), Path, queue_size=1)
+                     for i in range(self.n_boids)]
+
+        #define a path message for each boid
+        self.boid_path = [Path() for i in range(self.n_boids)]
+        self.boid_traj = [Marker() for i in range(self.n_boids)]
+        #define a publisher for the linestrip trajectory of each boid
+        self.traj_pub = [rospy.Publisher('/robot_{}/trajectory'.format(i), Marker, queue_size=1)
+                        for i in range(self.n_boids)]
+        #create an array of different random RGBA colors to be used for each boid path trajectory
+        self.traj_colors = [ColorRGBA(np.random.rand(), np.random.rand(), np.random.rand(), 1.0) for i in range(self.n_boids)]
+        #define some basic attributes of the path message
+        for i in range(self.n_boids):
+            #basic path attributes
+            self.boid_path[i].header.frame_id = "map"
+            self.boid_path[i].header.stamp = rospy.Time.now()
+
+            #basic marker trajectory attributes
+            self.boid_traj[i].header.frame_id = "map"
+            self.boid_traj[i].header.stamp = rospy.Time.now()
+            self.boid_traj[i].type = Marker.LINE_STRIP
+            self.boid_traj[i].action = Marker.ADD
+            self.boid_traj[i].lifetime = rospy.Duration(423864)
+            self.boid_traj[i].scale.x = 0.05
+            self.boid_traj[i].color = self.traj_colors[i]
+
+        self.marker_array_publisher = rospy.Publisher('boids_marker_array', MarkerArray, queue_size=1)
+        self.goal_marker_publisher = rospy.Publisher('goal_marker', Marker, queue_size=1)
+        self.subgoal_marker_pub = rospy.Publisher('subgoal_marker_array', MarkerArray, queue_size=1)
         self.map_subscriber = rospy.Subscriber("/map", OccupancyGrid, self.map_cb)
+
 
     def initialize_behaviors(self):
         # Initialize behaviors and behavior list
@@ -130,6 +160,34 @@ class Reynolds:
         # Start the algorithm with a ROS timer
         rospy.Timer(rospy.Duration(0.1), self.run)
 
+
+    def start_visualization(self):
+        #____________________________   visualize   ____________________________
+        if rospy.get_param('~visualize'):
+
+            self.truncate_trajectories = rospy.get_param('~truncate_trajectories')
+
+            self.map_msg = None
+            self.map_dilated = False
+
+            self.trajectory_pubs = {}
+
+            self.boids_markers = MarkerArray()
+            self.boids_markers.markers = []
+            self.robot_trajectories = {}
+            # self.robot_trajectories = dict((i, Path(poses=[])) for i in range(self.n_boids))
+            for i in range(self.n_boids):
+                self.robot_trajectories[i] = Path(poses=[])
+
+            self.boids_markers_pub = rospy.Publisher("/vis/boid_positions", MarkerArray,queue_size=1) 
+            self.dilated_obs_pub = rospy.Publisher("/vis/obstacle_dilated", OccupancyGrid, queue_size=1)
+            self.goal_pub = rospy.Publisher("/vis/goal", Marker, queue_size=1)
+            
+            for robot_id in range(self.n_boids):
+                self.trajectory_pubs[robot_id] = rospy.Publisher(f"/vis/robot_{robot_id}/trajectory", Path, queue_size=1)
+
+            rospy.Timer(rospy.Duration(0.05), self._visualize) # 20fps
+
     def set_goals(self, all_goals):
         self.all_goals = all_goals
         
@@ -155,6 +213,7 @@ class Reynolds:
             self.convex_hull(goal)
         if self.leader_type == 1:
             self.compute_goals = False # IF THIS IS FALSE, THE LEADERS WILL BE FIXED
+        self.goal = goal
         pass
 
 
@@ -178,7 +237,7 @@ class Reynolds:
         marker.scale.y = 2*self.percep_field[0]*self.inter_goal_dist
         marker.scale.z = 0
         marker.lifetime = rospy.Duration(8937393)
-        marker.color = ColorRGBA(0.0, 1.0, 0.0, 0.5)
+        marker.color = ColorRGBA(0.0, 1.0, 0.0, 0.2)
         self.goal_marker_publisher.publish(marker)
         pass
 
@@ -269,6 +328,7 @@ class Reynolds:
         # self.avoid_obstacles.set(data=env, 
         #                         resolution=gridmap.info.resolution, 
         #                         origin=[gridmap.info.origin.position.x, gridmap.info.origin.position.y])
+        self.map_msg = gridmap   
 
     @classmethod
     def point_angle_length(cls, p1=[], angle=0, length=1):
@@ -290,7 +350,7 @@ class Reynolds:
         # Convert 60 degrees to radians
         angle = np.pi / 3
         for i in range(self.n_leaders - 1):
-            goals.append([*self.point_angle_length(goal[:2], angle, self.percep_field[0] * self.inter_goal_dist), goal[2], goal[3]])
+            goals.append([*self.point_angle_length(goal[:2], angle, self.percep_field[0] * self.inter_goal_dist/2), goal[2], goal[3]])
             angle += np.pi / 3
         
         #save all the generated goals
@@ -308,13 +368,13 @@ class Reynolds:
             #NOTE: JOSEPH: Added the following line
             self.leading_boid_ids.append(closest_boid)
 
-        # Plot the goals assigned to each boid
-        for boid in self.boids:
-            if boid == None:
-                continue
-            if boid.get_goal() == None:
-                continue
-            plt.plot(boid.get_goal()[0], boid.get_goal()[1], 'ro')
+        # # Plot the goals assigned to each boid
+        # for boid in self.boids:
+        #     if boid == None:
+        #         continue
+        #     if boid.get_goal() == None:
+        #         continue
+        #     plt.plot(boid.get_goal()[0], boid.get_goal()[1], 'ro')
         # plt.show()
 
     def convex_hull(self, goal=None):
@@ -392,7 +452,143 @@ class Reynolds:
         cmd_vel.linear.y = vel[1]
         # Publish to the appropriate topic
         self.pubs[boid.id].publish(cmd_vel)
+    
+    #write a function to publish the trajectory of each boid as a path
+    def publish_path(self):
+        #publish the position of each boid as a path
+        for i, boid in enumerate(self.boids):
+            #create a pose message
+            pose = PoseStamped()
+            pose.header.frame_id = "map"
+            pose.header.stamp = rospy.Time.now()
+            pose.pose.position.x = boid.get_pos()[0]
+            pose.pose.position.y = boid.get_pos()[1]
+            pose.pose.position.z = 0
+            #convert the yaw angle to a euler to quaternion
+            quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, boid.get_theta())
+            pose.pose.orientation.x = quaternion[0]
+            pose.pose.orientation.y = quaternion[1]
+            pose.pose.orientation.z = quaternion[2]
+            pose.pose.orientation.w = quaternion[3]
+            #append the pose to the path
+            self.boid_path[i].poses.append(pose)
+            #publish the path
+            self.path_pub[boid.id].publish(self.boid_path[i])
+    
+    def publish_boid_trajectory(self):
+        for i, boid in enumerate(self.boids):
+            boid_pose = boid.get_pose()
+            pose = PoseStamped()
+            pose.header.frame_id = "map"
+            pose.header.stamp = rospy.Time.now()
+            pose.pose.position.x = boid_pose[0]
+            pose.pose.position.y = boid_pose[1]
+            pose.pose.position.z = 0
+            #convert the yaw angle to a euler to quaternion
+            quaternion = tf.transformations.quaternion_from_euler(0.0, 0.0, boid_pose[2])
+            pose.pose.orientation.x = quaternion[0]
+            pose.pose.orientation.y = quaternion[1]
+            pose.pose.orientation.z = quaternion[2]
+            pose.pose.orientation.w = quaternion[3]
+        
+            #the trajectory is a linestrip marker
+            self.boid_traj[i].points.append(pose.pose.position)
+            self.traj_pub[i].publish(self.boid_traj[i])
+        pass
+    
 
+    def _visualize(self, event):
+        self.boids_markers.markers = []
+
+        # Extra pos and leader data from boids
+        pos_list, leader_list = [], []
+
+        # Ensure that all boids have been created and have a position and velocity before running the algorithm
+        if not(self.boids_created):
+            return
+
+        for b in self.boids:
+            pos_list.append(b.get_pos())
+            leader_list.append(0 if b.get_goal() is None else 1)
+        
+        for i in range(self.n_boids):
+
+            #___________________  create boid markers  ___________________
+            marker = Marker(
+                header=Header(frame_id="map"),
+                type=Marker.SPHERE,
+                action=Marker.ADD,
+                pose=Pose(Point(*pos_list[i], 0), Quaternion(0, 0, 0, 1)),
+                # red for leader, blue for normal
+                color=ColorRGBA(leader_list[i], 0, 1-leader_list[i], 1),
+                scale=Vector3(0.1, 0.1, 0.1),
+                lifetime=rospy.Duration(0),
+            )
+            marker.id = i
+            self.boids_markers.markers.append(marker)
+
+            #___________________  create local neighbordhoods  ___________________
+            marker = Marker(
+                header=Header(frame_id="map"),
+                type=Marker.CYLINDER,
+                action=Marker.ADD,
+                pose=Pose(Point(*pos_list[i], 0), Quaternion(0, 0, 0, 1)),
+                # red for leader, blue for normal
+                color=ColorRGBA(0, 1, 0, 0.15),
+                scale=Vector3(self.percep_field[0], self.percep_field[0], 0.05),
+                lifetime=rospy.Duration(0),
+            )
+            marker.id = i + self.n_boids
+            self.boids_markers.markers.append(marker)
+        self.boids_markers_pub.publish(self.boids_markers)
+
+        #___________________   publish goal  ___________________
+        marker = Marker(
+                header=Header(frame_id="map"),
+                type=Marker.CYLINDER,
+                action=Marker.ADD,
+                pose=Pose(Point(*[self.goal[0], self.goal[1]], 0), Quaternion(0, 0, 0, 1)),
+                # red for leader, blue for normal
+                color=ColorRGBA(1, 1, 0, 0.4),
+                # scale=Vector3(self.goal[-2], self.goal[-2], 0.1),
+                scale=Vector3(2*self.percep_field[0]*self.inter_goal_dist, 2*self.percep_field[0]*self.inter_goal_dist, 0.1),
+                lifetime=rospy.Duration(0),
+            )
+        self.goal_pub.publish(marker)
+
+        #___________________  Publish dilated map  ___________________
+        if not(self.map_dilated):
+            grid_map = np.array(self.map_msg.data).reshape(self.map_msg.info.height, self.map_msg.info.width)
+            dilated_obs = self.all_behaviors['_steer_to_avoid'].dilate_obstacles(grid_map, 
+                                    dilation_length = round(self.obs_r/self.map_msg.info.resolution))
+            dilation = (dilated_obs - grid_map)*0.5
+            self.map_msg.data = dilation.flatten().astype(int).tolist()
+            self.map_dilated = True 
+        self.dilated_obs_pub.publish(self.map_msg)
+
+
+        #___________________  Publish Trajectories  ___________________
+        def update_trajectory(pos_list, robot_id,m=100):
+            # Create a new pose stamped with the current position
+            pose_stamped = PoseStamped()
+            pose_stamped.header.stamp = rospy.Time.now()
+            pose_stamped.header.frame_id = "map"
+            pose_stamped.pose.position = Point(*pos_list[robot_id], 0.0)
+
+            # Update the trajectory for the specified robot
+            if robot_id not in self.robot_trajectories:
+                self.robot_trajectories[robot_id] = Path()
+            self.robot_trajectories[robot_id].poses.append(pose_stamped)
+
+            traj_to_keep = self.truncate_trajectories
+            if len(self.robot_trajectories[robot_id].poses) > traj_to_keep:
+                self.robot_trajectories[robot_id].poses = self.robot_trajectories[robot_id].poses[-traj_to_keep:]
+
+            self.robot_trajectories[robot_id].header.frame_id = "map"
+
+            self.trajectory_pubs[robot_id].publish(self.robot_trajectories[robot_id])
+
+        [update_trajectory(pos_list, i) for i in range(self.n_boids)]
 
     def run(self, event):
         # Ensure that all boids have been created and have a position and velocity before running the algorithm
@@ -446,15 +642,22 @@ class Reynolds:
                 self.assign_goal(self.goal_list[0])
             # Check if the current goal is reached
             if self.is_goal_reached():
+                #set the goal of all boids to None
+                for boid in self.boids:
+                    boid.set_goal(None)
                 # Update the goal
                 self.update_goal()
         #publish the goal
-        self.publish_goal_marker(self.goal)
+        # self.publish_goal_marker(self.goal)
         #publish the subgoals
         self.publish_subgoals(self.all_goals)
         #publish the formation
         if self.boids_created:
             self.publish_formation()
+            #publish the path of each boid
+            # self.publish_path()
+            #publish the trajectory of each boid
+            self.publish_boid_trajectory()
         
 
     def _test_odom(self,event):

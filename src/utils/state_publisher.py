@@ -3,7 +3,7 @@ import rospy
 from sensor_msgs.msg import JointState
 import random
 
-#NOTE: DEVELOPMENT IN PROGRESS
+#NOTE: DEVELOPMENT IN PROGRESS FOR RQT GUI
 
 def state_publisher():
     rospy.init_node('state_publisher')

@@ -1,0 +1,64 @@
+Panel:
+  - Class: rviz/Displays
+  - Class: rviz/Selection
+  - Class: rviz/Tool Properties
+  - Class: rviz/Views
+  - Class: rviz/Time
+Global Options:
+  Fixed Frame: map
+  Background Color: 48; 48; 48
+  Frame Rate: 30
+Views:
+  Current:
+    Class: rviz/Orbit
+    Eye Point: [-5, -5, 10]
+    Focus Point: [0, 0, 0]
+    Distance: 10
+Displays:
+  - Class: rviz/Grid
+    Cell Size: 1
+    Line Style:
+      Line Width: 0.03
+      Value: Lines
+    Color: 160; 160; 164
+    Reference Frame: <Fixed Frame>
+  - Class: rviz/MarkerArray
+    Marker Topic: /boids_marker_array
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /goal_marker
+    Queue Size: 1
+  - Class: rviz/MarkerArray
+    Marker Topic: /subgoal_marker_array
+    Queue Size: 1
+
+  - Class: rviz/Marker
+    Marker Topic: /robot_0/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_1/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_2/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_3/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_4/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_5/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_6/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_7/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_8/trajectory
+    Queue Size: 1
+  - Class: rviz/Marker
+    Marker Topic: /robot_9/trajectory
+    Queue Size: 1
