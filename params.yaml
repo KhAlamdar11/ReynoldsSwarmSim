@@ -19,9 +19,9 @@ local_theta: 360.0
 # Desired goal
 goal_x: 4.0 # 0
 goal_y: 4.0 # 3.7
-goal_radius: 1.5
-goal_tolerance: 1.0
-inter_goal_dist: 0.3 # Ratio of distance between two goals
+goal_radius: 0.5
+goal_tolerance: 0.02
+inter_goal_dist: 0.4 # Ratio of distance between two goals
 
 # Set multiple goals as a list of [x, y, radius, tolerance]
 use_multigoal: False
