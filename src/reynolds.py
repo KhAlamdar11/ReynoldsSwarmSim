@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import rospy
-from std_msgs.msg import String
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import OccupancyGrid, Path
@@ -177,6 +176,7 @@ class Reynolds:
 
     def start_visualization(self):
         #____________________________   visualize   ____________________________
+
         if rospy.get_param('~visualize'):
 
             self.truncate_trajectories = rospy.get_param('~truncate_trajectories')
@@ -576,8 +576,7 @@ class Reynolds:
                 pose=Pose(Point(*[self.goal[0], self.goal[1]], 0), Quaternion(0, 0, 0, 1)),
                 # red for leader, blue for normal
                 color=ColorRGBA(1, 1, 0, 0.4),
-                # scale=Vector3(self.goal[-2], self.goal[-2], 0.1),
-                scale=Vector3(2*self.percep_field[0]*self.inter_goal_dist, 2*self.percep_field[0]*self.inter_goal_dist, 0.1),
+                scale=Vector3(self.goal[-2], self.goal[-2], 0.1),
                 lifetime=rospy.Duration(0),
             )
         self.goal_pub.publish(marker)
@@ -591,6 +590,7 @@ class Reynolds:
             self.map_msg.data = dilation.flatten().astype(int).tolist()
             self.map_dilated = True 
         self.dilated_obs_pub.publish(self.map_msg)
+
 
         #___________________  Publish Trajectories  ___________________
         def update_trajectory(pos_list, robot_id,m=100):
@@ -615,53 +615,6 @@ class Reynolds:
 
         [update_trajectory(pos_list, i) for i in range(self.n_boids)]
 
-    def run(self, event):
-        # Ensure that all boids have been created and have a position and velocity before running the algorithm
-        for b in self.boids:
-            if b == None:
-                continue
-            if b.get_pos() == None:
-                continue
-
-            # print(f"Boid {b.id} is at loc: {b.get_pos()} with velocty: {b.get_linvel()}")
-            neighbors = self.find_neighbors(b)
-            b.set_neighbors(neighbors)
-            cmd_vel = b.update(self.boids)
-
-            ## Test obstacle avoidance in isolation
-            # cmd_vel = b.test_obstacle_avoidance(self.avoid_obstacles)
-
-            #publish the cmd velocity to the appropriate boids topic
-            self.publish_cmd_vel(b, cmd_vel)
-
-        #NOTE: I see a possible bug because boids have started moving before the goals are generated, but its not a problem for now.
-        # Generate goals (if necessary) for leader boids. Single goal case
-        if self.compute_goals and self.boids_created and not self.use_multigoal:
-            self.assign_goal(self.goal) #generate and assign the goals to the boids
-        #if the multigoal option is selected the boids would be assigned new goals from the goal list once the previous goals have been reached
-        if self.compute_goals and self.boids_created and self.use_multigoal:
-            # Assign the first goal if no goal has been assigned yet
-            if self.current_goal_index == 0:
-                self.assign_goal(self.goal_list[0])
-            # Check if the current goal is reached
-            if self.is_goal_reached():
-                #set the goal of all boids to None
-                for boid in self.boids:
-                    boid.set_goal(None)
-                # Update the goal
-                self.update_goal()
-                
-        #publish the goal
-        # self.publish_goal_marker(self.goal)
-        #publish the subgoals
-        self.publish_subgoals(self.all_goals)
-        #publish the formation
-        if self.boids_created:
-            self.publish_formation()
-            #publish the path of each boid
-            # self.publish_path()
-            #publish the trajectory of each boid
-            self.publish_boid_trajectory()
         
     def _test_odom(self,event):
         print('-------------------------')

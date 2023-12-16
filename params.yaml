@@ -1,4 +1,4 @@
-# visualize via rviz
+# visualization params
 visualize: True
 truncate_trajectories: 10000000  # None if displaying full trajectories
 
