@@ -11,6 +11,7 @@ class Boid:
 
         # save poses for plotting later
         self.poses_list = np.empty((0, 3), dtype=float)
+        # self.poses_list = np.empty((0, 2), dtype=float)
 
         # [x,y,theta,v_x,v_y,w]
         self.state = state
@@ -113,6 +114,13 @@ class Boid:
         if constructor == 'self':
             return weight * getattr(self, name)()
         return weight * getattr(constructor, name)(self.get_pose(), self.get_linvel(), self.get_goal())
+    
+    def save_pose(self, pose):
+        '''
+        Store the acceleration requests for each behavior for plotting purposes.
+        '''
+        self.poses_list = np.vstack((self.poses_list, np.array(pose)))
+        np.save(f'/home/moses/unizg_ws/src/mrs-r1/_miscellaneous/Pose_plots/Boid_{self.id}.npy', self.poses_list)
             
     def update(self, boids=None):
         '''
@@ -148,6 +156,7 @@ class Boid:
         cmd_vel = np.clip(cmd_vel, -self.max_speed, self.max_speed)
 
         # Save trajectory
+        # self.save_pose(self.get_pos_n_velocity_direction())
         # self.poses_list = np.vstack((self.poses_list, self.get_pos_n_velocity_direction()))
         # np.savetxt('/home/alamdar11/Desktop/path_simple_maze_10x10_SteerToAvoid_wall.npy', self.poses_list)
 

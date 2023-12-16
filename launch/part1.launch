@@ -1,12 +1,13 @@
 <launch>
     <!-- Declare a parameter for the node -->
     <!-- <param name="example_param" type="str" value="custom_value"/> -->
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mrs-r1)/rviz/vis.rviz"/>
 
     <!-- Run the example node -->
-    <node name="reynolds_part_1" pkg="mrs-r1" type="reynolds.py" output="screen">
+    <arg name="node_start_delay" default="2.0" />  
+    <node name="reynolds_part_1" pkg="mrs-r1" type="reynolds.py" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' ">
         <rosparam file="$(find mrs-r1)/params.yaml"/>
     </node>
 
-    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find mrs-r1)/rviz/vis.rviz"/>
 
 </launch>
