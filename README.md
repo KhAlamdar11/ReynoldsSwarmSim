@@ -1,4 +1,4 @@
-﻿
+
 <!-- ### UNIVERSITY OF ZAGREB  -->
 
 # Controlling a Swarm of Robots in a Simulator Stage using Reynolds’ Rules
@@ -15,11 +15,11 @@ This project focuses on implementing and evaluating Craig Reynolds’ behavioral
 <table>
   <tr>
     <td>
-      <img src="Results/map_b1.gif" alt="Two Lines" width="350">
+      <img src="media/map_b1.gif" alt="Two Lines" width="350">
       <!-- <p>Hexagon Formation with Steer-to-avoid</p> -->
     </td>
     <td>
-      <img src="Results/map_a1.gif" alt="Three Lines" width="350">
+      <img src="media/map_a1.gif" alt="Three Lines" width="350">
       <!-- <p>Rectangle Formation with Steer-to-avoid</p> -->
     </td>
   </tr>
@@ -37,7 +37,6 @@ Note: This project combines theoretical concepts with practical application, she
 - [Configuration Guide](#configuration-guide)
 - [Customization](#customization)
 - [Visualizing Results](#visualizing-results)
-- [Further Documentation](#further-documentation)
 - [Contributing](#contributing)
 - [License](#license)
 - [Authors](#authors)
