@@ -6,10 +6,9 @@
 [![Python](https://img.shields.io/badge/Python-3.7%20or%20later-blue.svg)](https://www.python.org/downloads/)
 [![Stage Simulator](https://img.shields.io/badge/Simulator-Stage-orange.svg)](http://wiki.ros.org/stage_ros)
 [![Project Website](https://img.shields.io/badge/Website-green.svg)](https://adeolajoseph.github.io/multirobotswarm/)
+[![Paper](https://img.shields.io/badge/Paper-purple.svg)](https://adeolajoseph.github.io/multirobotswarm/assets/MRS_project1_report.pdf)
 
-<!-- <img src="assets/gif/asteroid_2.gif" alt="Three Lines" width="100%"> -->
-
-This project focuses on implementing and evaluating Craig Reynolds’ behavioral rules—separation, alignment, and cohesion—within a Robot Operating System (ROS) framework and the Stage simulator. The project aims to en- hance the capabilities of robotic swarms by adding Naviga- tion and Obstacle Avoidance behaviors to allow the swarm to move towards specific points and stop, while Obstacle Avoidance enables them to detect and evade obstacles, thus preventing collisions. The robots are tested in various scenarios to assess their collective behavior, adaptability, and robustness. 
+This project focuses on implementing and evaluating Craig Reynolds’ behavioral rules—separation, alignment, and cohesion—within a Robot Operating System (ROS) framework and the Stage simulator. The project aims to enhance the capabilities of robotic swarms by adding Navigation and Obstacle Avoidance behaviors to allow the swarm to move towards specific points and stop, while Obstacle Avoidance enables them to detect and evade obstacles, thus preventing collisions. The robots are tested in various scenarios to assess their collective behavior, adaptability, and robustness. 
 
 
 <table>
@@ -26,7 +25,7 @@ This project focuses on implementing and evaluating Craig Reynolds’ behavioral
 </table>
 
 
-Note: This project combines theoretical concepts with practical application, shedding light on the dynamics of robotic swarms and their potential in simulated environ- ments. Video results are provided to illustrate the findings. [here ](https://www.youtube.com/playlist?list=PLEhDw-EN_WqGiUwWmusO_4fW-CWt7HmLE)and [here.](https://www.youtube.com/playlist?list=PL_eKUkXsvo0Y0a8hcg0ggh9Zck--EYpBf)
+Note: This project combines theoretical concepts with practical applications, shedding light on the dynamics of robotic swarms and their potential in simulated environments. Video results are provided to illustrate the findings. [here ](https://www.youtube.com/playlist?list=PLEhDw-EN_WqGiUwWmusO_4fW-CWt7HmLE)and [here.](https://www.youtube.com/playlist?list=PL_eKUkXsvo0Y0a8hcg0ggh9Zck--EYpBf)
 
 
 ## Table of Contents
