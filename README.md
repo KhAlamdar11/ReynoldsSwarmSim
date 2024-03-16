@@ -5,8 +5,8 @@
 [![ROS](https://img.shields.io/badge/ROS-Noetic%20or%20later-blue.svg)](http://wiki.ros.org/ROS/Installation)
 [![Python](https://img.shields.io/badge/Python-3.7%20or%20later-blue.svg)](https://www.python.org/downloads/)
 [![Stage Simulator](https://img.shields.io/badge/Simulator-Stage-orange.svg)](http://wiki.ros.org/stage_ros)
-[![Project Website](https://img.shields.io/badge/Website-blue.svg)](https://adeolajoseph.github.io/multirobotswarm/)
-[![Paper](https://img.shields.io/badge/Paper-purple.svg)](https://adeolajoseph.github.io/multirobotswarm/assets/MRS_project1_report.pdf)
+[![Project Website](https://img.shields.io/badge/Website-green.svg)](https://adeolajoseph.github.io/multirobotswarm/)
+
 <!-- <img src="assets/gif/asteroid_2.gif" alt="Three Lines" width="100%"> -->
 
 This project focuses on implementing and evaluating Craig Reynolds’ behavioral rules—separation, alignment, and cohesion—within a Robot Operating System (ROS) framework and the Stage simulator. The project aims to en- hance the capabilities of robotic swarms by adding Naviga- tion and Obstacle Avoidance behaviors to allow the swarm to move towards specific points and stop, while Obstacle Avoidance enables them to detect and evade obstacles, thus preventing collisions. The robots are tested in various scenarios to assess their collective behavior, adaptability, and robustness. 
@@ -15,11 +15,11 @@ This project focuses on implementing and evaluating Craig Reynolds’ behavioral
 <table>
   <tr>
     <td>
-      <img src="assets/gif/map_b2.gif" alt="Two Lines" width="350">
+      <img src="Results/map_b1.gif" alt="Two Lines" width="350">
       <!-- <p>Hexagon Formation with Steer-to-avoid</p> -->
     </td>
     <td>
-      <img src="assets/gif/map_a1.gif" alt="Three Lines" width="350">
+      <img src="Results/map_a1.gif" alt="Three Lines" width="350">
       <!-- <p>Rectangle Formation with Steer-to-avoid</p> -->
     </td>
   </tr>
@@ -32,14 +32,17 @@ Note: This project combines theoretical concepts with practical application, she
 ## Table of Contents
 
 - [Installation](#installation)
+- [How to Run](#how-to-run)
+- [Directory Structure](#directory-structure)
 - [Configuration Guide](#configuration-guide)
-- [Running Simulations](#running-simulations)
 - [Customization](#customization)
 - [Visualizing Results](#visualizing-results)
 - [Further Documentation](#further-documentation)
 - [Contributing](#contributing)
 - [License](#license)
 - [Authors](#authors)
+
+
 
 ## Installation
 
@@ -66,7 +69,7 @@ To run a simulation, use the provided launch files. For instance, to start a sim
 
 1. Go to the `stage_simulator` launch yaml file and change the number of robots to the desired value.
 
-2. Go to the `params.yaml` file and change the number of boids (i.e., k + n) to the same value as the above.
+2. Go to the `params.yaml` file and change the number of boids (i.e., n) to the same value as the above.
 
 3. Spawn the robots in the Stage Simulator:
     ```bash
@@ -78,7 +81,7 @@ To run a simulation, use the provided launch files. For instance, to start a sim
     ```bash
     roslaunch mrs-r1 part1.launch
 
-## Code Structure:
+## Directory Structure:
 
  - TODO
 <!-- - ROS script: src/reynolds.py
@@ -228,9 +231,9 @@ Determines the selection and behavior of leaders within the swarm.
 - **Leader Type** (`leader_type`): Determines if leaders are dynamic or fixed.
 
 ```yaml
-n_leaders: 5
-leader_method: 0
-leader_type: 0
+n_leaders: 5 # Should not be greater than 7
+leader_method: 0 # 0: Closest to goal, 1: ConvexHull
+leader_type: 0 # 0: Dynamic, 1: Fixed
 ```
 
 ### Prioritized Acceleration
@@ -280,9 +283,10 @@ hard_arrival: True
 This package is designed to be highly configurable. To customize your simulation, edit the `params.yaml` file, adjusting the parameters as needed based on the descriptions provided above. Experimenting with different configurations can help you understand the impact of various behaviors and parameters on the multi-robot system's overall performance.
 
 
-
-
 ## Visualizing Results
+
+Results can be visualized in real-time using RViz. Ensure the `visualize` parameter is set to `True` and use the provided RViz configuration to observe the boids' behaviors, trajectories, and interactions with obstacles.
+
 
 Results can be visualized in real-time using RViz. Ensure the `visualize` parameter is set to `True` and use the provided RViz configuration to observe the boids' behaviors, trajectories, and interactions with obstacles.
 
