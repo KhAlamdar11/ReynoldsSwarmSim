@@ -286,8 +286,6 @@ This package is designed to be highly configurable. To customize your simulation
 Results can be visualized in real-time using RViz. Ensure the `visualize` parameter is set to `True` and use the provided RViz configuration to observe the boids' behaviors, trajectories, and interactions with obstacles.
 
 
-Results can be visualized in real-time using RViz. Ensure the `visualize` parameter is set to `True` and use the provided RViz configuration to observe the boids' behaviors, trajectories, and interactions with obstacles.
-
 ## Contributing
 
 We welcome contributions to the package.
