@@ -288,8 +288,7 @@ Results can be visualized in real-time using RViz. Ensure the `visualize` parame
 
 ## Contributing
 
-We welcome contributions to the package.
-
+We welcome contributions to the package. For more information on how to contribute, please reach out to any of the authors.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
