@@ -8,7 +8,7 @@
 [![Project Website](https://img.shields.io/badge/Website-green.svg)](https://adeolajoseph.github.io/multirobotswarm/)
 [![Paper](https://img.shields.io/badge/Paper-purple.svg)](https://adeolajoseph.github.io/multirobotswarm/assets/MRS_project1_report.pdf)
 
-This project focuses on implementing and evaluating Craig Reynolds’ behavioral rules—separation, alignment, and cohesion—within a Robot Operating System (ROS) framework and the Stage simulator. The project aims to enhance the capabilities of robotic swarms by adding Navigation and Obstacle Avoidance behaviors to allow the swarm to move towards specific points and stop, while Obstacle Avoidance enables them to detect and evade obstacles, thus preventing collisions. The robots are tested in various scenarios to assess their collective behavior, adaptability, and robustness. 
+This project focuses on implementing and evaluating Craig Reynolds’ behavioral rules—separation, alignment, and cohesion within a Robot Operating System (ROS) framework and the Stage simulator. The project aims to enhance the capabilities of robotic swarms by adding Navigation and Obstacle Avoidance behaviors to allow the swarm to move towards specific points and stop, while Obstacle Avoidance enables them to detect and evade obstacles, thus preventing collisions. The robots are tested in various scenarios to assess their collective behavior, adaptability, and robustness. 
 
 
 <table>
