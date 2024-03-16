@@ -5,8 +5,8 @@
 [![ROS](https://img.shields.io/badge/ROS-Noetic%20or%20later-blue.svg)](http://wiki.ros.org/ROS/Installation)
 [![Python](https://img.shields.io/badge/Python-3.7%20or%20later-blue.svg)](https://www.python.org/downloads/)
 [![Stage Simulator](https://img.shields.io/badge/Simulator-Stage-orange.svg)](http://wiki.ros.org/stage_ros)
-[![Project Website](https://img.shields.io/badge/Website-green.svg)](https://adeolajoseph.github.io/multirobotswarm/)
-[![Paper](https://img.shields.io/badge/Website-purple.svg)](https://adeolajoseph.github.io/multirobotswarm/assets/MRS_project1_report.pdf)
+[![Project Website](https://img.shields.io/badge/Website-blue.svg)](https://adeolajoseph.github.io/multirobotswarm/)
+[![Paper](https://img.shields.io/badge/Paper-purple.svg)](https://adeolajoseph.github.io/multirobotswarm/assets/MRS_project1_report.pdf)
 <!-- <img src="assets/gif/asteroid_2.gif" alt="Three Lines" width="100%"> -->
 
 This project focuses on implementing and evaluating Craig Reynolds’ behavioral rules—separation, alignment, and cohesion—within a Robot Operating System (ROS) framework and the Stage simulator. The project aims to en- hance the capabilities of robotic swarms by adding Naviga- tion and Obstacle Avoidance behaviors to allow the swarm to move towards specific points and stop, while Obstacle Avoidance enables them to detect and evade obstacles, thus preventing collisions. The robots are tested in various scenarios to assess their collective behavior, adaptability, and robustness. 
