@@ -32,7 +32,6 @@ Note: This project combines theoretical concepts with practical applications, sh
 
 - [Installation](#installation)
 - [How to Run](#how-to-run)
-- [Directory Structure](#directory-structure)
 - [Configuration Guide](#configuration-guide)
 - [Customization](#customization)
 - [Visualizing Results](#visualizing-results)
@@ -79,9 +78,9 @@ To run a simulation, use the provided launch files. For instance, to start a sim
     ```bash
     roslaunch mrs-r1 part1.launch
 
-## Directory Structure:
+<!-- ## Directory Structure:
 
- - TODO
+ - TODO -->
 <!-- - ROS script: src/reynolds.py
 
     Main ros script to:
