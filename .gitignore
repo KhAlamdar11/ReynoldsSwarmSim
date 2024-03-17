@@ -137,3 +137,8 @@ _readmes/
 _Khawaja_personal/
 _miscellaneous/
 
+src/utils/visualization_files
+src/utils/utils/Boid_testing_visualization.py
+src/utils/utils/mrs_project_local_neighborhood.py
+
+_tests/
