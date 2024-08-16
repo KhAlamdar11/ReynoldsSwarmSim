@@ -120,7 +120,7 @@ class Boid:
         Store the acceleration requests for each behavior for plotting purposes.
         '''
         self.poses_list = np.vstack((self.poses_list, np.array(pose)))
-        np.save(f'/home/moses/unizg_ws/src/mrs-r1/_miscellaneous/Pose_plots/Boid_{self.id}.npy', self.poses_list)
+        np.save(f'/home/moses/unizg_ws/src/reynolds_swarm_sim/_miscellaneous/Pose_plots/Boid_{self.id}.npy', self.poses_list)
             
     def update(self, boids=None):
         '''

@@ -25,7 +25,7 @@ This project focuses on implementing and evaluating Craig Reynolds’ behavioral
 </table>
 
 
-Note: This project combines theoretical concepts with practical applications, shedding light on the dynamics of robotic swarms and their potential in simulated environments. Video results are provided to illustrate the findings. [here ](https://www.youtube.com/playlist?list=PLEhDw-EN_WqGiUwWmusO_4fW-CWt7HmLE)and [here.](https://www.youtube.com/playlist?list=PL_eKUkXsvo0Y0a8hcg0ggh9Zck--EYpBf)
+Note: This project combines theoretical concepts with practical applications, shedding light on the dynamics of robotic swarms and their potential in simulated environments. Video results are provided to illustrate the findings [here ](https://www.youtube.com/playlist?list=PLEhDw-EN_WqGiUwWmusO_4fW-CWt7HmLE) and [here.](https://www.youtube.com/playlist?list=PL_eKUkXsvo0Y0a8hcg0ggh9Zck--EYpBf)
 
 
 ## Table of Contents
@@ -44,17 +44,37 @@ Note: This project combines theoretical concepts with practical applications, sh
 ## Installation
 
 1. **Dependencies**: Ensure ROS (Robot Operating System) and Python 3 are installed on your system.
-2. **Clone the Repository**: Clone this repository into your ROS workspace's `src` directory.
+
+2. **Install sphero_simulation package:** Ensure that the sphero_simulation package and its dependencies are installed:
+
+    ```bash
+    sudo apt install -y \
+    ros-${ROS_DISTRO}-teleop-twist-keyboard \
+    ros-${ROS_DISTRO}-map-server \
+    ros-${ROS_DISTRO}-stage-ros
+    cd ~/catkin_ws/src
+    git clone https://github.com/larics/sphero_simulation.git
+    catkin build
+    ```
+
+    Alternatively, for Docker installation, follow the detailed instructions [here](https://github.com/larics/mrs_course).
+
+3. **Clone the Repository**: 
+
    ```bash
    cd ~/catkin_ws/src
-   git clone git@github.com:KhAlamdar11/mrs-r1.git
+   git clone https://github.com/KhAlamdar11/ReynoldsSwarmSim.git
    ```
-3. **Build the Package**: From the root of your ROS workspace, build the package using `catkin_make`.
+
+4. **Build the Package**:
+
    ```bash
    cd ~/catkin_ws
-   catkin_make
+   catkin build reynolds_swarm_sim
    ```
-4. **Source the Workspace**: Source your ROS workspace to make the package available.
+
+5. **Source the Workspace**: 
+
    ```bash
    source devel/setup.bash
    ```
@@ -64,46 +84,20 @@ Note: This project combines theoretical concepts with practical applications, sh
 
 To run a simulation, use the provided launch files. For instance, to start a simulation with the default configuration:
 
-1. Go to the `stage_simulator` launch yaml file and change the number of robots to the desired value.
+1. Go to the `launch_params.yaml` file in the `~/catkin_ws/src/sphero_simulation/sphero_stage/launch` launch directory and change the number of robots to the desired value. You can also change the starting formation as well as the environment/map from this launch file. Some additional map templates are provided in the resources folder of this package.
 
-2. Go to the `params.yaml` file and change the number of boids (i.e., n) to the same value as the above.
+2. Go to the `params.yaml` file in the package and change the number of boids (i.e., n) to the same value as the above.
 
 3. Spawn the robots in the Stage Simulator:
     ```bash
     rosrun sphero_stage start.py
     ```
-4. The robots will be spawned in Stage in the predefined formation (as defined in the launch yaml file of the simulator).
 
-5. Launch the formation control node:
-    ```bash
-    roslaunch mrs-r1 part1.launch
-
-<!-- ## Directory Structure:
-
- - TODO -->
-<!-- - ROS script: src/reynolds.py
-
-    Main ros script to:
-    - subcribe to all the boids
-    - creates all boids
-    - updates their states with callbacks
-    - calls the update of each boid with a set frequency (run function) **TODO**
-    - publishes command velocities to each boid **TODO**
-
-- Boid algorithm: src/utils/Boid.py
-
-    Boid class to do all the processing:
-    - state defined as [x,y,theta,v_x,v_y,w]
-    - getter functions to extract the states and get what you want
-    - **TODO**: algorithmic implementations
-
-- Utility functions: src/utils/utils.py
+4. Launch the node for flocking:
     
-    Helper functions -->
-
-<!-- ![](media/system_arc.png) -->
-
-
+    ```bash
+    roslaunch reynolds_swarm_sim part1.launch
+    ```
 
 
 ## Configuration Guide
